@@ -1,23 +1,29 @@
 #!/bin/sh
 
-INSTANCE=$1
-FILE_SYSTEM=$2
-MOUNT_DIR=$3
+usage() {
+  printf "Usage: %s: -f <file_system> -p <mount_path>\n" $0
+}
 
-echo "Mounting file system $FILE_SYSTEM to instance $INSTANCE at mount point $MOUNT_DIR"
+while getopts 'f:p:' flag; do
+  case "${flag}" in
+    f) FILE_SYSTEM=${OPTARG};;
+    p) MOUNT_PATH=${OPTARG};;
+    ?) usage && exit 2;;
+  esac
+done
 
-sudo apt update
-sudo apt install nfs-common
+if [ -z "$FILE_SYSTEM" ]; then usage && exit 2; fi
+if [ -z "$MOUNT_PATH" ]; then usage && exit 2; fi
 
-sudo mkdir $MOUNT_DIR
+mount 1> /dev/null || exit 1
 
-sudo mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport $FILE_SYSTEM:/ $MOUNT_DIR
+echo "Mounting file system $FILE_SYSTEM at mount point $MOUNT_PATH"
 
-cd $MOUNT_DIR
-
+sudo mkdir $MOUNT_PATH
+sudo mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport $FILE_SYSTEM:/ $MOUNT_PATH || exit 1
+cd $MOUNT_PATH
 sudo chmod go+rw .
 
 rm mount-test.txt
 echo "Successfully mounted" > mount-test.txt
 cat mount-test.txt
-
