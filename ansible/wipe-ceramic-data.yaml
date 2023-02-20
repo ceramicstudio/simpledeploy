@@ -1,0 +1,20 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Stop ceramic
+      systemd:
+        name: ceramic
+        state: stopped
+      tags: ceramic
+    - name: Remove ceramic data
+      file:
+        path: "{{ item }}"
+        state: absent
+      tags: ceramic
+      loop:
+        - /etc/systemd/system/ceramic.service
+        - /home/ceramic/.ceramic
+        - "{{ ceramic_data_mount_path }}"
+        - /home/ceramic/.nvm/versions/node/v16.19.0/lib/node_modules/@ceramicnetwork
+        - /home/ceramic/.nvm/versions/node/v16.19.0/bin/ceramic

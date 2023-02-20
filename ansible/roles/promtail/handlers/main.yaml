@@ -1,0 +1,6 @@
+---
+- name: promtail-restart
+  service:
+    name: promtail
+    state: restarted
+    enabled: yes

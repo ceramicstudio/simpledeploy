@@ -1,0 +1,117 @@
+---
+- name: Format and mount block device
+  block:
+    - name: Create persistant data location
+      community.general.filesystem:
+        fstype: ext4
+        dev: "{{ ceramic_data_block_path }}"
+
+    - name: Mount persistant data location
+      ansible.posix.mount:
+        path: "{{ ceramic_data_mount_path }}"
+        src: "{{ ceramic_data_block_path }}"
+        fstype: ext4
+        state: mounted
+  when: ceramic_data_block_path is defined
+
+- name: create user
+  ansible.builtin.user:
+    name: ceramic
+    state: present
+    shell: /bin/bash
+    home: /home/ceramic
+
+- name: Create ceramic_data for persistent data storage
+  ansible.builtin.file:
+    path: "{{ ceramic_data_mount_path }}/ceramic_data/"
+    state: directory
+    owner: ceramic
+  register: ceramic_data_dir
+
+- name: Create indexing for persistent index data
+  ansible.builtin.file:
+    path: "{{ ceramic_data_mount_path }}/indexing/"
+    state: directory
+    owner: ceramic
+  register: index_data_dir
+
+- name: Setup Node
+  become: yes
+  become_flags: --login
+  become_user: ceramic
+  block:
+    - name: Install nvm
+      ansible.builtin.shell: >
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+      args:
+        executable: /bin/bash
+        chdir: "$HOME"
+        creates: "$HOME/.nvm/nvm.sh"
+
+    - name: Setup .bashrc
+      ansible.builtin.lineinfile:
+        path: ~/.bashrc
+        line: source ~/.nvm/nvm.sh # This will make sure Node is on the user's PATH
+        create: yes
+
+    - name: Install node
+      ansible.builtin.shell: |
+        source ~/.nvm/nvm.sh && echo $PATH && nvm install {{item}}
+      args:
+        executable: /bin/bash
+        chdir: "$HOME"
+        creates: "$HOME/.nvm/versions/node/v{{item}}"
+      loop:
+        - 16.19.0
+      register: install_node_version
+
+- name: Setup Ceramic
+  become: yes
+  become_flags: --login
+  become_user: ceramic
+  block:
+    - name: Install ceramic
+      ansible.builtin.shell: |
+        source ~/.nvm/nvm.sh && npm install -g @composedb/cli@next @ceramicnetwork/cli@next
+      args:
+        executable: /bin/bash
+        chdir: "$HOME"
+        creates: "$HOME/.nvm/versions/node/v{{item}}/bin/ceramic"
+      loop:
+        - 16.19.0
+      register: install_ceramic_version
+
+    - name: Create .ceramic
+      ansible.builtin.file:
+        path: $HOME/.ceramic
+        state: directory
+
+    - name: Template ceramic daemon.config
+      ansible.builtin.template:
+        src: "./configs/ceramic-daemon-config.json.j2"
+        dest: "$HOME/.ceramic/daemon.config.json"
+      register: ceramic_daemon_config
+
+- name: "Setup Ceramic systemd unit"
+  become: yes
+  block:
+    - name: "Template ceramic systemd unit"
+      ansible.builtin.template:
+        src: "ceramic.service.j2"
+        dest: "/etc/systemd/system/ceramic.service"
+      register: ceramic_systemd_unit
+
+    - name: "Start and enable ceramic systemd unit"
+      ansible.builtin.systemd:
+        name: "ceramic"
+        state: "started"
+        enabled: true
+        daemon_reload: true
+
+- name: "Start and enable ceramic systemd unit"
+  ansible.builtin.systemd:
+    name: "ceramic"
+    state: "restarted"
+    enabled: true
+    daemon_reload: true
+  when: ceramic_daemon_config.changed

@@ -1,0 +1,37 @@
+{
+    "anchor": {},
+    "http-api": {
+        "cors-allowed-origins": [
+            ".*"
+        ],
+        "admin-dids": [
+        {% for did in admin_dids -%}
+        "{{ did.value }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+        ]
+    },
+    "ipfs": {
+        "mode": "bundled"
+    },
+    "logger": {
+        "log-level": 2,
+        "log-to-files": true
+    },
+    "metrics": {
+        "metrics-exporter-enabled": false,
+        "metrics-port": 9090
+    },
+    "network": {
+        "name": "testnet-clay"
+    },
+    "node": {},
+    "state-store": {
+        "mode": "fs",
+        "local-directory": "{{ ceramic_data_mount_path }}/ceramic_data/statestore/"
+    },
+    "indexing": {
+        "db": "{{ ceramic_indexing_db }}",
+        "allow-queries-before-historical-sync": true,
+        "models": {{ models_to_index | to_json}}
+    }
+}

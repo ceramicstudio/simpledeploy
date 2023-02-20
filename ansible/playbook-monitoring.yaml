@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - name: grafana-cloud-agent
+      import_role:
+        name: grafana-cloud-agent
+      tags: grafana-cloud-agent
+    - name: promtail
+      import_role:
+        name: promtail
+      tags: promtail

@@ -1,0 +1,13 @@
+[Unit]
+Description=Promtail
+StartLimitIntervalSec=30
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/promtail-linux-amd64 -config.file=/etc/promtail/promtail.yml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

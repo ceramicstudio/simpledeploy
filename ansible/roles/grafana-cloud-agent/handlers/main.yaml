@@ -1,0 +1,6 @@
+---
+- name: grafana-cloud-agent-restart
+  service:
+    name: grafana-cloud-agent
+    state: restarted
+    enabled: yes

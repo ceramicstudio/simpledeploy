@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - name: ceramic
+      import_role:
+        name: ceramic
+      tags: ceramic

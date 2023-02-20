@@ -1,0 +1,32 @@
+---
+- name: Install docker dependencies
+  apt:
+    pkg:
+      - ca-certificates
+      - gnupg
+      - python3-pip
+    update_cache: yes
+
+- name: Add Docker apt key
+  apt_key:
+    data: "{{ lookup('file', 'docker.gpg') }}"
+    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable"
+    filename: docker
+    state: present
+
+- name: Install Docker
+  apt:
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    update_cache: yes
+
+- name: Install docker python package
+  pip:
+    name: docker
