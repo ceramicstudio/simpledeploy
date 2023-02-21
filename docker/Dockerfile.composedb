@@ -1,0 +1,9 @@
+ARG TAG=2.20.1
+FROM ceramicnetwork/js-ceramic:${TAG}
+RUN \
+  apt-get update \
+  && apt-get -y install gettext-base \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+RUN npm install --location=global @composedb/cli@^0.3.0
+ENTRYPOINT ["/usr/local/bin/composedb"]
