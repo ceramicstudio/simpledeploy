@@ -1,0 +1,26 @@
+---
+namespace: ceramic-hds
+
+resources:
+  - ipfs.yaml
+  - composedb.yaml
+  - postgres.yaml
+
+configMapGenerator:
+  - name: composedb-template
+    files:
+      - daemon-config.json
+  - name: composedb-env
+    envs:
+      - ./composedb.env
+
+images:
+  - name: 3boxben/composedb
+    newName: 3boxben/composedb@sha256
+    newTag: d404fb8c8c1c49a02002365032a315d5d0e680e2b9bb3cf776d9bd39665f3c4c
+  - name: postgres/postgres
+    newName: postgres
+    newTag: 15-alpine
+  - name: ipfs/ipfs
+    newName: ceramicnetwork/go-ipfs-daemon
+    newTag: 538cf226150f06df0fcec862dcad3505bd14b2ac
