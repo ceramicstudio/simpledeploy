@@ -1,0 +1,125 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: composedb
+  namespace: default
+  labels:
+    app: composedb
+spec:
+  replicas: 1
+  serviceName: composedb
+  selector:
+    matchLabels:
+      app: composedb
+  template:
+    metadata:
+      labels:
+        app: composedb
+    spec:
+      initContainers:
+        - name: init-composedb-config
+          image: 3boxben/composedb
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          command:
+            - "/bin/bash"
+            - "-c"
+            - "/composedb-init/compose-init.sh"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: composedb-init
+              mountPath: /composedb-init
+
+          envFrom:
+            - configMapRef:
+                name: composedb-env
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ceramic-admin
+                  key: private-key
+            - name: CERAMIC_INDEXING_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: username
+            - name: CERAMIC_INDEXING_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: password
+      containers:
+        - name: composedb
+          image: 3boxben/composedb
+          command:
+            - "/js-ceramic/packages/cli/bin/ceramic.js"
+            - "daemon"
+            - "--config"
+            - "/config/daemon-config.json"
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          env:
+            - name: CERAMIC_STATE_STORE_PATH
+              value: "/ceramic-data"
+          envFrom:
+            - configMapRef:
+                name: composedb-env
+          ports:
+            - containerPort: 7007
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: ceramic-data
+              mountPath: /ceramic-data
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+        - name: composedb-init
+          configMap:
+            name: composedb-init
+            defaultMode: 0755
+        - name: ceramic-data
+          persistentVolumeClaim:
+            claimName: ceramic-data
+  volumeClaimTemplates:
+    - metadata:
+        name: ceramic-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: composedb
+  namespace: default
+  labels:
+    app: composedb
+spec:
+  ports:
+    - port: 7007
+      targetPort: 7007
+      protocol: TCP
+      name: composedb
+  selector:
+    app: composedb
+  type: NodePort

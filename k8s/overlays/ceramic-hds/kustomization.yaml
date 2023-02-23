@@ -1,0 +1,19 @@
+---
+namespace: ceramic-hds
+
+bases:
+  - ../../base
+
+resources:
+  - ./manifests/runner.yaml
+
+images:
+  - name: 3boxben/runner
+    newName: 3boxben/composedb@sha256
+    newTag: d404fb8c8c1c49a02002365032a315d5d0e680e2b9bb3cf776d9bd39665f3c4c
+
+configMapGenerator:
+  - name: schemas
+    files:
+      - ./schemas/SmokeTestModel-main.graphql
+      - ./schemas/SmokeTestModel-relation.graphql
