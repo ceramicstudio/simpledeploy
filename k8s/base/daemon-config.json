@@ -2,7 +2,7 @@
     "anchor": {},
     "http-api": {
         "cors-allowed-origins": [
-            ".*"
+            "${CERAMIC_CORS_ALLOWED_ORIGINS}"
         ],
         "admin-dids": [
             "${CERAMIC_ADMIN_DID}"
@@ -13,7 +13,7 @@
         "host": "${CERAMIC_IPFS_HOST}"
     },
     "logger": {
-        "log-level": 2,
+        "log-level": ${CERAMIC_LOG_LEVEL},
         "log-to-files": false
     },
     "metrics": {

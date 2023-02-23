@@ -1,0 +1,40 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: runner
+  namespace: default
+  labels:
+    app: runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runner
+  template:
+    metadata:
+      labels:
+        app: runner
+    spec:
+      containers:
+        - name: runner
+          image: 3boxben/runner
+          command: ["/bin/sh", "-c", "sleep infinity"]
+          resources:
+            limits:
+              cpu: "2"
+              ephemeral-storage: 1Gi
+              memory: 4Gi
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ceramic-admin
+                  key: private-key
+          volumeMounts:
+            - name: schemas
+              mountPath: /schemas
+      volumes:
+        - name: schemas
+          configMap:
+            name: schemas

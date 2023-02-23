@@ -1,0 +1,8 @@
+type SmokeTestModel @loadModel(id: <smoke-test-model-stream-id>) {
+    id: ID!
+}
+
+type MyModel @createModel(accountRelation: LIST, description:"Smoke Test Model") {
+  linkedDocID: StreamID! @documentReference(model: "SmokeTestModel")
+  linkedDoc: SmokeTestModel @relationDocument(property: "linkedDocID")
+}

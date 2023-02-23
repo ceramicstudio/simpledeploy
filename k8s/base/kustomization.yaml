@@ -1,15 +1,16 @@
 ---
-namespace: ceramic-hds
+namespace: ceramic
 
 resources:
-  - ipfs.yaml
-  - composedb.yaml
-  - postgres.yaml
+  - ./manifests/ipfs.yaml
+  - ./manifests/composedb.yaml
+  - ./manifests/postgres.yaml
 
 configMapGenerator:
-  - name: composedb-template
+  - name: composedb-init
     files:
-      - daemon-config.json
+      - ./daemon-config.json
+      - ./compose-init.sh
   - name: composedb-env
     envs:
       - ./composedb.env

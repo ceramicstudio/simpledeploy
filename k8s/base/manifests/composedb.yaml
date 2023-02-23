@@ -30,23 +30,24 @@ spec:
               ephemeral-storage: 1Gi
               memory: 512Mi
           command:
-            - "/bin/sh"
+            - "/bin/bash"
             - "-c"
-            - envsubst < /configmap/daemon-config.json > /config/daemon-config.json
+            - "/composedb-init/compose-init.sh"
           volumeMounts:
             - name: config-volume
               mountPath: /config
-            - name: config-map
-              mountPath: /configmap
+            - name: composedb-init
+              mountPath: /composedb-init
+
           envFrom:
             - configMapRef:
                 name: composedb-env
           env:
-            - name: CERAMIC_ADMIN_DID
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
                   name: ceramic-admin
-                  key: did
+                  key: private-key
             - name: CERAMIC_INDEXING_DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -90,9 +91,10 @@ spec:
       volumes:
         - name: config-volume
           emptyDir: {}
-        - name: config-map
+        - name: composedb-init
           configMap:
-            name: composedb-template
+            name: composedb-init
+            defaultMode: 0755
         - name: ceramic-data
           persistentVolumeClaim:
             claimName: ceramic-data
