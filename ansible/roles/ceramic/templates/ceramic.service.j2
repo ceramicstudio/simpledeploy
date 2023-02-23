@@ -1,0 +1,17 @@
+[Unit]
+Description=Ceramic Node
+After=network-online.target
+
+[Service]
+Type=simple
+User=ceramic
+ExecStart=/home/ceramic/.nvm/versions/node/v{{ ceramic_node_version }}/bin/node /home/ceramic/.nvm/versions/node/v{{ ceramic_node_version }}/lib/node_modules/@ceramicnetwork/cli/bin/ceramic.js daemon
+Environment=CERAMIC_ENABLE_EXPERIMENTAL_SYNC=true
+Environment=CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB=true
+
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+NoNewPrivileges=yes
+[Install]
+WantedBy=multi-user.target

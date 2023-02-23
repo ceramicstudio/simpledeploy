@@ -1,0 +1,13 @@
+[Unit]
+Description=Grafana Cloud Agent
+StartLimitIntervalSec=30
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=grafana-cloud-agent
+ExecStart=/usr/local/bin/agent-linux-amd64 -config.file=/etc/grafana-cloud-agent/agent.yml -metrics.wal-directory=/var/cache/grafana-cloud-agent/wal
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

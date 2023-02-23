@@ -1,0 +1,30 @@
+integrations:
+  agent:
+    enabled: true
+  node_exporter:
+    enabled: true
+  process_exporter:
+    enabled: true
+  prometheus_remote_write:
+    - url: https://prometheus-us-central1.grafana.net/api/prom/push
+      basic_auth:
+        username: "{{ grafana_cloud_username }}"
+        password: "{{ grafana_cloud_password }}"
+server:
+  log_level: info
+prometheus:
+  global:
+    scrape_interval: 5s
+    external_labels:
+      vm_node: "{{ inventory_hostname }}"
+  configs:
+    - name: default
+      remote_write:
+        - url: https://prometheus-us-central1.grafana.net/api/prom/push
+          basic_auth:
+            username: "{{ grafana_cloud_username }}"
+            password: "{{ grafana_cloud_password }}"
+          write_relabel_configs:
+            - source_labels: [__name__]
+              regex: "node_cpu_seconds_total|node_memory_MemTotal_bytes|node_memory_MemFree_bytes|node_memory_Cached_bytes|node_memory_Buffers_bytes|node_memory_SReclaimable_bytes|node_memory_SwapTotal_bytes|node_memory_SwapFree_bytes"
+              action: keep

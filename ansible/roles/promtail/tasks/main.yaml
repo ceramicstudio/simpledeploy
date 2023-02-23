@@ -1,0 +1,44 @@
+---
+- name: Install required packages
+  apt:
+    state: present
+    cache_valid_time: 604800
+    name:
+      - unzip
+
+- name: Get binary
+  unarchive:
+    src: "https://github.com/grafana/loki/releases/download/v2.7.1/promtail-linux-amd64.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+  notify: promtail-restart
+
+- name: Create app directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/promtail/
+
+- name: Install systemd unit file
+  copy:
+    src: promtail.service
+    dest: /etc/systemd/system/promtail.service
+  register: promtail_systemd_unit_file
+
+- name: Systemd daemon reload
+  systemd:
+    daemon_reload: yes
+  when: promtail_systemd_unit_file.changed
+
+- name: Template config file
+  template:
+    src: "{{ promtail.template_config }}"
+    dest: /etc/promtail/promtail.yml
+  notify: promtail-restart
+
+- name: Enable and start the service
+  systemd:
+    name: promtail
+    enabled: yes
+    state: started

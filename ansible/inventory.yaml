@@ -1,0 +1,29 @@
+---
+all:
+  hosts:
+    ceramic-hds-ubuntu-sfo3-alpha.yooser.xyz:
+  vars:
+    admin_dids:
+      - name: benchmark-testing
+        value: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          34343234656362653837623231396533636538303662336331333666353735613630326163323462
+          6634303335363530333364303263636536656133333535660a353735363564343638623939306266
+          30313263323666366462613837616236336166306239306265316263323333363765376165633737
+          3261303662613863310a393136366364336435663336386263303966626664313365373262326565
+          35653234643263343562303333316232313137316639656637363635636665383231323433313162
+          32663034653061306432643762616339643037316438643131616430363035326235343233373834
+          623831396663376266333431376362353865
+    models_to_index:
+      - "kjzl6hvfrbw6c845kvo6rq3zbv0uin9vo0slxq8aavx5nbvcxtppe2qga7d8abx"
+    ceramic_data_mount_path: /ceramic_data_disk
+    ceramic_node_version: 16.19.0
+    grafana_cloud_username:
+    grafana_cloud_password:
+    grafana_cloud_agent:
+      version: v0.30.2
+      template_config: configs/grafana-cloud-agent.yml.j2
+    promtail_grafana_cloud_username:
+    promtail:
+      version: v0.30.2
+      template_config: configs/promtail.yml.j2

@@ -1,0 +1,51 @@
+---
+- name: Install required packages
+  apt:
+    state: present
+    cache_valid_time: 604800
+    name:
+      - unzip
+
+- name: Create user
+  user:
+    name: grafana-cloud-agent
+    state: present
+
+- name: Get binary
+  unarchive:
+    src: "https://github.com/grafana/agent/releases/download/{{ grafana_cloud_agent.version }}/agent-linux-amd64.zip"
+    dest: /usr/local/bin
+    remote_src: yes
+  notify: grafana-cloud-agent-restart
+
+- name: Create app directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: grafana-cloud-agent
+  loop:
+    - /etc/grafana-cloud-agent/
+    - /var/cache/grafana-cloud-agent/
+
+- name: Install systemd unit file
+  copy:
+    src: grafana-cloud-agent.service
+    dest: /etc/systemd/system/grafana-cloud-agent.service
+  register: grafana_cloud_agent_systemd_unit_file
+
+- name: Systemd daemon reload
+  systemd:
+    daemon_reload: yes
+  when: grafana_cloud_agent_systemd_unit_file.changed
+
+- name: Template config file
+  template:
+    src: "{{ grafana_cloud_agent.template_config }}"
+    dest: /etc/grafana-cloud-agent/agent.yml
+  notify: grafana-cloud-agent-restart
+
+- name: Enable and start the service
+  systemd:
+    name: grafana-cloud-agent
+    enabled: yes
+    state: started
