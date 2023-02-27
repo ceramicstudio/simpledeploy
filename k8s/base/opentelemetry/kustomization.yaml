@@ -1,0 +1,8 @@
+---
+resources:
+  - ./opentelemetry.yaml
+
+configMapGenerator:
+  - name: optel-config
+    files:
+      - ./optel-config.yaml

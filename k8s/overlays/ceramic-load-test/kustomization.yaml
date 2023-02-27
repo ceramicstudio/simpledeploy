@@ -2,7 +2,8 @@
 namespace: ceramic-load-test
 
 bases:
-  - ../../base
+  - ../../base/composedb
+  - ../../base/opentelemetry
 
 resources:
   - ./manifests/runner.yaml
@@ -12,6 +13,9 @@ images:
   - name: 3boxben/runner
     newName: 3boxben/composedb@sha256
     newTag: d404fb8c8c1c49a02002365032a315d5d0e680e2b9bb3cf776d9bd39665f3c4c
+  - name: otel/opentelemetry-collector
+    newName: otel/opentelemetry-collector
+    newTag: 0.72.0
 
 configMapGenerator:
   - name: schemas
