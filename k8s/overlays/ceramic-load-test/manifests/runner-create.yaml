@@ -1,0 +1,45 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: runner-create
+  namespace: default
+  labels:
+    app: runner-create
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runner-create
+  template:
+    metadata:
+      labels:
+        app: runner-create
+    spec:
+      containers:
+        - name: runner-create
+          image: 3boxben/runner
+          command: ["/scripts/create-doc.sh"]
+          resources:
+            limits:
+              cpu: "2"
+              ephemeral-storage: 1Gi
+              memory: 4Gi
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ceramic-admin
+                  key: private-key
+          envFrom:
+            - configMapRef:
+                name: runner-env
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: scripts
+            defaultMode: 0755
+
