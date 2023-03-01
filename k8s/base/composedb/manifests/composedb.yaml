@@ -83,6 +83,12 @@ spec:
                 name: composedb-env
           ports:
             - containerPort: 7007
+          readinessProbe:
+            httpGet:
+              path: /api/v0/node/healthcheck
+              port: 7007
+            initialDelaySeconds: 60
+            periodSeconds: 15
           volumeMounts:
             - name: config-volume
               mountPath: /config

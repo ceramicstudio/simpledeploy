@@ -2,7 +2,7 @@
 namespace: ceramic-hds
 
 bases:
-  - ../../base
+  - ../../base/composedb
 
 resources:
   - ./manifests/runner.yaml

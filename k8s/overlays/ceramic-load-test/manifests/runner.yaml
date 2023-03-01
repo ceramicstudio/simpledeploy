@@ -22,7 +22,7 @@ spec:
           command: ["/bin/sh", "-c", "sleep infinity"]
           resources:
             limits:
-              cpu: "2"
+              cpu: "1"
               ephemeral-storage: 1Gi
               memory: 4Gi
           env:
