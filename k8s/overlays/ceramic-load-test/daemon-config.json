@@ -1,0 +1,35 @@
+{
+    "anchor": {},
+    "http-api": {
+        "cors-allowed-origins": [
+            "${CERAMIC_CORS_ALLOWED_ORIGINS}"
+        ],
+        "admin-dids": [
+            "${CERAMIC_ADMIN_DID}"
+        ]
+    },
+    "ipfs": {
+        "mode": "remote",
+        "host": "${CERAMIC_IPFS_HOST}"
+    },
+    "logger": {
+        "log-level": ${CERAMIC_LOG_LEVEL},
+        "log-to-files": false
+    },
+    "metrics": {
+        "metrics-exporter-enabled": false
+    },
+    "network": {
+        "name": "${CERAMIC_NETWORK}"
+    },
+    "node": {},
+    "state-store": {
+        "mode": "fs",
+        "local-directory": "${CERAMIC_STATE_STORE_PATH}"
+    },
+    "indexing": {
+        "db": "postgres://${CERAMIC_INDEXING_DB_USERNAME}:${CERAMIC_INDEXING_DB_PASSWORD}@postgres/ceramic",
+        "allow-queries-before-historical-sync": true,
+        "enable-historical-sync": true
+    }
+}

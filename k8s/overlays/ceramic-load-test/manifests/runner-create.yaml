@@ -7,7 +7,7 @@ metadata:
   labels:
     app: runner-create
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: runner-create
@@ -22,7 +22,7 @@ spec:
           command: ["/scripts/create-doc.sh"]
           resources:
             limits:
-              cpu: "2"
+              cpu: "0.5"
               ephemeral-storage: 1Gi
               memory: 4Gi
           env:
