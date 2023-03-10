@@ -19,8 +19,8 @@ Requires
 ```
 kind create cluster --name ceramic
 kubectl create ns ceramic
-./k8s/base/create-secrets.sh
-kubectl apply -k k8s/base/
+./k8s/base/composedb/create-secrets.sh
+kubectl apply -k k8s/base/composedb/
 ```
 
 View logs
