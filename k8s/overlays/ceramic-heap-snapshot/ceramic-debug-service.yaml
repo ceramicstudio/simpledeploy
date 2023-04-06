@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ceramic-debug
+  namespace: default
+  labels:
+    app: ceramic-debug
+spec:
+  ports:
+    - port: 9229
+      targetPort: 9229
+      protocol: TCP
+      name: ceramic-debug
+  selector:
+    app: composedb
+  type: NodePort

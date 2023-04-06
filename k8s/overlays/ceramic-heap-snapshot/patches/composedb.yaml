@@ -1,0 +1,72 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: composedb
+spec:
+  template:
+    metadata:
+      labels:
+        app: composedb
+    spec:
+      containers:
+        - name: composedb
+          command:
+            - node
+            - --max-old-space-size=$(MAX_OLD_SPACE_SIZE)
+            - --inspect=0.0.0.0:9229
+            - /js-ceramic/packages/cli/bin/ceramic.js
+            - daemon
+            - --config
+            - /config/daemon-config.json
+          env:
+            - name: MAX_OLD_SPACE_SIZE
+              valueFrom:
+                resourceFieldRef:
+                  containerName: composedb
+                  divisor: 1M
+                  resource: requests.memory
+          resources:
+            requests:
+              cpu: "3"
+              ephemeral-storage: 1Gi
+              memory: 4096Mi
+            limits:
+              cpu: "3"
+              ephemeral-storage: 1Gi
+              memory: 8192Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: ceramic-data
+              mountPath: /ceramic-data
+            - name: ceramic-heap-snapshots
+              mountPath: /ceramic-heap-snapshots
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+        - name: composedb-init
+          configMap:
+            name: composedb-init
+            defaultMode: 0755
+        - name: ceramic-data
+          persistentVolumeClaim:
+            claimName: ceramic-data
+        - name: ceramic-heap-snapshots
+          persistentVolumeClaim:
+            claimName: ceramic-heap-snapshots
+  volumeClaimTemplates:
+    - metadata:
+        name: ceramic-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+    - metadata:
+        name: ceramic-heap-snapshots
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Gi

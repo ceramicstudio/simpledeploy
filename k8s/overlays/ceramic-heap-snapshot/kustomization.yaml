@@ -1,0 +1,23 @@
+---
+namespace: ceramic-heap-snapshot
+
+bases:
+  - ../../base/composedb
+
+resources:
+  - ./ingress.yaml
+  - ./servicemonitor.yaml
+  - ./ceramic-debug-service.yaml
+  - ./node-heapsnapshot/node-heapsnapshot.yaml
+
+patchesStrategicMerge:
+  - ./patches/ipfs.yaml
+  - ./patches/composedb.yaml
+
+images:
+  - name: ipfs-metrics-proxy/ipfs-metrics-proxy
+    newName: 3boxben/ipfs-metric-proxy@sha256
+    newTag: 5363b31070a52c49a756cf0288a26d8d5c3a4762ed2d8bc073a66b389a5a317c
+  - name: node-heapsnapshot/node-heapsnapshot
+    newName: 3boxben/node-heapsnapshot@sha256
+    newTag: 1873ceb75b33ce7e1690ba1a752e6df3e3f31fa3ced500ec23ea79ff1f4624e1
