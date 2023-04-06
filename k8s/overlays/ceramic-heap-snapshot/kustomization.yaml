@@ -8,7 +8,7 @@ resources:
   - ./ingress.yaml
   - ./servicemonitor.yaml
   - ./ceramic-debug-service.yaml
-  - ./node-heapsnapshot/node-heapsnapshot.yaml
+  - ./node-heapsnapshot-cronjob.yaml
 
 patchesStrategicMerge:
   - ./patches/ipfs.yaml
@@ -20,4 +20,4 @@ images:
     newTag: 5363b31070a52c49a756cf0288a26d8d5c3a4762ed2d8bc073a66b389a5a317c
   - name: node-heapsnapshot/node-heapsnapshot
     newName: 3boxben/node-heapsnapshot@sha256
-    newTag: 1873ceb75b33ce7e1690ba1a752e6df3e3f31fa3ced500ec23ea79ff1f4624e1
+    newTag: 94389dddbf8aa0a20913d24c7cd8ea74a15394e332660797c4a10029e6ca7703

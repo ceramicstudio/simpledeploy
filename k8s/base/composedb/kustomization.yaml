@@ -23,5 +23,5 @@ images:
     newName: postgres
     newTag: 15-alpine
   - name: ipfs/ipfs
-    newName: ceramicnetwork/go-ipfs-daemon
-    newTag: 538cf226150f06df0fcec862dcad3505bd14b2ac
+    newName: ceramicnetwork/go-ipfs-daemon@sha256
+    newTag: c0c7f5886c1d86a2179cc6fba475005830ab148dde40dd7bde004fb7452bdd48
