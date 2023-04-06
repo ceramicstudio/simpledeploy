@@ -1,0 +1,67 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ipfs
+spec:
+  template:
+    metadata:
+      labels:
+        app: ipfs
+    spec:
+      containers:
+        - name: ipfs
+          resources:
+            requests:
+              cpu: "3"
+              ephemeral-storage: 1Gi
+              memory: 4096Mi
+            limits:
+              cpu: "3"
+              ephemeral-storage: 1Gi
+              memory: 8192Mi
+        - name: ipfs-proxy
+          image: ipfs-metrics-proxy/ipfs-metrics-proxy
+          env:
+            - name: IPFS_API_URL
+              value: http://localhost:5001
+          resources:
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 128Mi
+          ports:
+            - containerPort: 9100
+              name: ipfs-proxy
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ipfs
+  labels:
+    app: ipfs
+spec:
+  selector:
+    app: ipfs
+  ports:
+    - name: swarm
+      port: 4001
+      targetPort: 4001
+    - name: api
+      port: 5001
+      targetPort: 5001
+    - name: gateway
+      port: 8080
+      targetPort: 8080
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+    - name: ipfs-proxy
+      port: 9100
+      targetPort: 9100
+      protocol: TCP
+  type: NodePort

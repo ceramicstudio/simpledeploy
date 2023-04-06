@@ -1,0 +1,17 @@
+---
+kind: ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+metadata:
+  name: ipfs-metric-proxy
+  labels:
+    app: ipfs
+spec:
+  endpoints:
+    - port: ipfs-proxy
+      interval: 30s
+      path: /metrics
+  selector:
+    matchLabels:
+      app: ipfs
+  namespaceSelector:
+    any: true
