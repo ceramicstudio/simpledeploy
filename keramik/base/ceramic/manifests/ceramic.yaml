@@ -1,0 +1,162 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ceramic
+  namespace: default
+  labels:
+    app: ceramic
+spec:
+  replicas: 1
+  serviceName: ceramic
+  selector:
+    matchLabels:
+      app: ceramic
+  template:
+    metadata:
+      labels:
+        app: ceramic
+    spec:
+      initContainers:
+        - name: init-ceramic-config
+          image: 3boxben/composedb
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          command:
+            - "/bin/bash"
+            - "-c"
+            - "/ceramic-init/ceramic-init.sh"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: ceramic-init
+              mountPath: /ceramic-init
+
+          envFrom:
+            - configMapRef:
+                name: ceramic-env
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ceramic-admin
+                  key: private-key
+      containers:
+        - name: ceramic
+          image: 3boxben/composedb
+          command:
+            - "/js-ceramic/packages/cli/bin/ceramic.js"
+            - "daemon"
+            - "--config"
+            - "/config/daemon-config.json"
+            - "--anchor-service-api"
+            - "http://cas:8081"
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          env:
+            - name: CERAMIC_STATE_STORE_PATH
+              value: "/ceramic-data"
+          envFrom:
+            - configMapRef:
+                name: ceramic-env
+          ports:
+            - containerPort: 7007
+          readinessProbe:
+            httpGet:
+              path: /api/v0/node/healthcheck
+              port: 7007
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: ceramic-data
+              mountPath: /ceramic-data
+        - name: ipfs
+          image: ipfs/ipfs
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/usr/bin/ceramic-one"
+            - "daemon"
+            - "--store-dir"
+            - "/data/ipfs"
+          resources:
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          ports:
+            - containerPort: 4001
+              name: swarm
+            - containerPort: 5001
+              name: api
+            - containerPort: 8080
+              name: gateway
+            - containerPort: 9090
+              name: metrics
+          volumeMounts:
+            - name: ipfs-data
+              mountPath: /data/ipfs
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+        - name: ceramic-init
+          configMap:
+            name: ceramic-init
+            defaultMode: 0755
+        - name: ceramic-data
+          persistentVolumeClaim:
+            claimName: ceramic-data
+        - name: ipfs-data
+          persistentVolumeClaim:
+            claimName: ipfs-data
+  volumeClaimTemplates:
+    - metadata:
+        name: ceramic-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+    - metadata:
+        name: ipfs-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ceramic
+  namespace: default
+  labels:
+    app: ceramic
+spec:
+  ports:
+    - port: 7007
+      targetPort: 7007
+      protocol: TCP
+      name: ceramic
+  selector:
+    app: ceramic
+  type: NodePort

@@ -1,0 +1,351 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: cas
+  namespace: default
+  labels:
+    app: cas
+spec:
+  replicas: 1
+  serviceName: cas
+  selector:
+    matchLabels:
+      app: cas
+  template:
+    metadata:
+      labels:
+        app: cas
+    spec:
+      containers:
+        - name: cas
+          image: cas/cas
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          env:
+            - name: NODE_ENV
+              value: dev
+            - name: ANCHOR_EXPIRATION_PERIOD
+              value: '300000'
+            - name: ANCHOR_SCHEDULE_EXPRESSION
+              value: 0/1 * * * ? *
+            - name: APP_MODE
+              value: bundled
+            - name: APP_PORT
+              value:  '8081'
+            - name: BLOCKCHAIN_CONNECTOR
+              value: ethereum
+            - name: ETH_NETWORK
+              value: ganache
+            - name: ETH_RPC_URL
+              value: http://ganache:8545
+            - name: ETH_WALLET_PK
+              value: '0x16dd0990d19001c50eeea6d32e8fdeef40d3945962caf18c18c3930baa5a6ec9'
+            - name: ETH_CONTRACT_ADDRESS
+              value: '0xD3f84Cf6Be3DD0EB16dC89c972f7a27B441A39f2'
+            - name: IPFS_API_URL
+              value: http://cas-ipfs:5001
+            - name: IPFS_PUBSUB_TOPIC
+              value: local
+            - name: LOG_LEVEL
+              value: debug
+            - name: MERKLE_DEPTH_LIMIT
+              value: '0'
+            - name: VALIDATE_RECORDS
+              value: 'false'
+            - name: DB_NAME
+              value: 'anchor_db'
+            - name: DB_HOST
+              value: 'postgres'
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: password
+          ports:
+            - containerPort: 8081
+          volumeMounts:
+            - name: cas-data
+              mountPath: /cas/db
+      volumes:
+        - name: cas-data
+          persistentVolumeClaim:
+            claimName: cas-data
+  volumeClaimTemplates:
+    - metadata:
+        name: cas-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cas
+  namespace: default
+  labels:
+    app: cas
+spec:
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: cas
+  selector:
+    app: cas
+  type: NodePort
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ganache
+  namespace: default
+  labels:
+    app: ganache
+spec:
+  replicas: 1
+  serviceName: ganache
+  selector:
+    matchLabels:
+      app: ganache
+  template:
+    metadata:
+      labels:
+        app: ganache
+    spec:
+      containers:
+        - name: ganache
+          image: ganache/ganache
+          command:
+            - node
+            - /app/ganache-core.docker.cli.js
+            - --deterministic
+            - --db=/ganache/db
+            - --mnemonic
+            - 'move sense much taxi wave hurry recall stairs thank brother nut woman'
+            - --networkId
+            - '5777'
+            - --hostname
+            - '0.0.0.0'
+            - -l
+            - '80000000'
+            - --quiet
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          ports:
+            - containerPort: 8545
+          volumeMounts:
+            - name: ganache-data
+              mountPath: /ganache-data
+      volumes:
+        - name: ganache-data
+          persistentVolumeClaim:
+            claimName: ganache-data
+  volumeClaimTemplates:
+    - metadata:
+        name: ganache-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ganache
+  namespace: default
+  labels:
+    app: ganache
+spec:
+  ports:
+    - port: 8545
+      targetPort: 8545
+      protocol: TCP
+      name: ganache
+  selector:
+    app: ganache
+  type: NodePort
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: cas-ipfs
+  namespace: default
+  labels:
+    app: cas-ipfs
+spec:
+  replicas: 1
+  serviceName: cas-ipfs
+  selector:
+    matchLabels:
+      app: cas-ipfs
+  template:
+    metadata:
+      labels:
+        app: cas-ipfs
+    spec:
+      containers:
+        - name: ipfs
+          image: ipfs/ipfs
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/usr/bin/ceramic-one"
+            - "daemon"
+            - "--store-dir"
+            - "/data/ipfs"
+          resources:
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          ports:
+            - containerPort: 4001
+              name: swarm
+            - containerPort: 5001
+              name: api
+            - containerPort: 8080
+              name: gateway
+            - containerPort: 9090
+              name: metrics
+          volumeMounts:
+            - name: cas-ipfs-data
+              mountPath: /data/ipfs
+      volumes:
+        - name: cas-ipfs-data
+          persistentVolumeClaim:
+            claimName: cas-ipfs-data
+  volumeClaimTemplates:
+    - metadata:
+        name: cas-ipfs-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cas-ipfs
+  namespace: default
+  labels:
+    app: cas-ipfs
+spec:
+  ports:
+    - port: 5001
+      targetPort: 5001
+      protocol: TCP
+      name: cas-ipfs
+  selector:
+    app: cas-ipfs
+  type: ClusterIP
+
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  serviceName: postgres
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+      containers:
+        - name: postgres
+          image: postgres/postgres
+          env:
+            - name: POSTGRES_DB
+              value: anchor_db
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: password
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-auth
+                  key: username
+          resources:
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql
+              subPath: ceradmic_data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP

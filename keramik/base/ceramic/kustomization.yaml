@@ -1,0 +1,33 @@
+---
+namespace: ceramic
+
+resources:
+  - ./manifests/cas.yaml
+  - ./manifests/ceramic.yaml
+
+configMapGenerator:
+  - name: ceramic-init
+    files:
+      - ./daemon-config.json
+      - ./ceramic-init.sh
+  - name: ceramic-env
+    envs:
+      - ./ceramic.env
+
+images:
+  - name: 3boxben/composedb
+    newName: 3boxben/composedb@sha256
+    newTag: d404fb8c8c1c49a02002365032a315d5d0e680e2b9bb3cf776d9bd39665f3c4c
+  - name: ipfs/ipfs
+    #newName: ceramicnetwork/go-ipfs-daemon
+    newName: public.ecr.aws/r5b3e0r5/3box/ceramic-one
+    newTag: dev
+  - name: ganache/ganache
+    newName: trufflesuite/ganache-cli
+    newTag: latest
+  - name: cas/cas
+    newName: ceramicnetwork/ceramic-anchor-service
+    newTag: latest
+  - name: postgres/postgres
+    newName: postgres
+    newTag: 15-alpine
