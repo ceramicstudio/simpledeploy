@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: composedb-lb
+  namespace: ceramic
+  labels:
+    app: composedb
+spec:
+  ports:
+    - port: 7007
+      targetPort: 7007
+      protocol: TCP
+      name: composedb
+  selector:
+    app: composedb
+  type: NodePort
+
+spec:
+  type: LoadBalancer
+  selector:
+    app: composedb
+  ports:
+    - name: api
+      protocol: TCP
+      port: 7007
+      targetPort: 7007
