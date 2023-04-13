@@ -3,20 +3,20 @@ namespace: ceramic-load-test
 
 bases:
   - ../../base/composedb
-  - ../../base/opentelemetry
+  #- ../../base/opentelemetry
 
 resources:
-  - ./manifests/runner.yaml
-  - ./manifests/runner-create.yaml
+  #- ./manifests/runner.yaml
+  #- ./manifests/runner-create.yaml
   - ./ingress.yaml
 
 images:
   - name: 3boxben/runner
     newName: 3boxben/composedb@sha256
-    newTag: e13306b7d2e59bbb4ce228bd862a54b18b2fa047b437946e2110169fcbb32c3a
+    newTag: ec296e273685f82db1eaaec9a76ea861c21b75117e01d01bc8513cdd9c18b1f5
   - name: 3boxben/composedb
     newName: 3boxben/composedb@sha256
-    newTag: e13306b7d2e59bbb4ce228bd862a54b18b2fa047b437946e2110169fcbb32c3a
+    newTag: ec296e273685f82db1eaaec9a76ea861c21b75117e01d01bc8513cdd9c18b1f5
   - name: otel/opentelemetry-collector
     newName: otel/opentelemetry-collector
     newTag: 0.72.0
