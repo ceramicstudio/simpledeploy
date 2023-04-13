@@ -15,6 +15,9 @@ patchesStrategicMerge:
   - ./patches/composedb.yaml
 
 images:
+  - name: 3boxben/composedb
+    newName: 3boxben/composedb@sha256
+    newTag: ec296e273685f82db1eaaec9a76ea861c21b75117e01d01bc8513cdd9c18b1f5
   - name: ipfs-metrics-proxy/ipfs-metrics-proxy
     newName: 3boxben/ipfs-metric-proxy@sha256
     newTag: 5363b31070a52c49a756cf0288a26d8d5c3a4762ed2d8bc073a66b389a5a317c
