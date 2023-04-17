@@ -78,6 +78,11 @@ spec:
           env:
             - name: CERAMIC_STATE_STORE_PATH
               value: "/ceramic-data"
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ceramic-admin
+                  key: private-key
           envFrom:
             - configMapRef:
                 name: composedb-env
