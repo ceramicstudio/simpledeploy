@@ -24,4 +24,4 @@ images:
     newTag: 15-alpine
   - name: ipfs/ipfs
     newName: ceramicnetwork/go-ipfs-daemon@sha256
-    newTag: c0c7f5886c1d86a2179cc6fba475005830ab148dde40dd7bde004fb7452bdd48
+    newTag: 836f9832efde6d0c561dedb1529202eecb065c2bb85b5f04f29b0b72ba7f60ba
