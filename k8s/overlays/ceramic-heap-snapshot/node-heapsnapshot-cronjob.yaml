@@ -4,7 +4,7 @@ apiVersion: batch/v1
 metadata:
   name: node-heapsnapshot
 spec:
-  schedule: "*/5 * * * *"
+  schedule: "0 */4 * * *"
   jobTemplate:
     spec:
       template:

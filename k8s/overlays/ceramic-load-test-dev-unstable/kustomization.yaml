@@ -1,0 +1,35 @@
+---
+namespace: ceramic-load-test-dev-unstable
+
+bases:
+  - ../../base/composedb
+
+resources:
+  - ./ingress.yaml
+  - ./ipfs-cluster.yaml
+
+images:
+  - name: 3boxben/runner
+    newName: 3boxben/composedb@sha256
+    newTag: ec296e273685f82db1eaaec9a76ea861c21b75117e01d01bc8513cdd9c18b1f5
+  - name: 3boxben/composedb
+    newName: 3boxben/composedb@sha256
+    newTag: ec296e273685f82db1eaaec9a76ea861c21b75117e01d01bc8513cdd9c18b1f5
+  - name: otel/opentelemetry-collector
+    newName: otel/opentelemetry-collector
+    newTag: 0.72.0
+
+configMapGenerator:
+  - name: composedb-env
+    behavior: replace
+    envs:
+      - ./composedb.env
+  - name: composedb-init
+    behavior: replace
+    files:
+      - ./daemon-config.json
+      - ./compose-init.sh
+
+patchesStrategicMerge:
+  - ./patches/ipfs.yaml
+  - ./patches/composedb.yaml

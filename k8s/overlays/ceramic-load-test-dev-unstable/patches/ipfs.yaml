@@ -1,0 +1,25 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ipfs
+spec:
+  template:
+    metadata:
+      labels:
+        app: ipfs
+    spec:
+      containers:
+        - name: ipfs
+          resources:
+            requests:
+              cpu: "9"
+              ephemeral-storage: 1Gi
+              memory: 16Gi
+            limits:
+              cpu: "12"
+              ephemeral-storage: 1Gi
+              memory: 32Gi
+          envFrom:
+            - secretRef:
+                name: ipfs-identity
