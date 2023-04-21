@@ -92,8 +92,16 @@ spec:
             httpGet:
               path: /api/v0/node/healthcheck
               port: 7007
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /api/v0/node/healthcheck
+              port: 7007
             initialDelaySeconds: 60
             periodSeconds: 15
+            timeoutSeconds: 30
           volumeMounts:
             - name: config-volume
               mountPath: /config
