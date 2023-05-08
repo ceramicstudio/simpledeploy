@@ -2,7 +2,7 @@
 
 This repository contains scripts to help with the deployment of Ceramic nodes.
 
-## Ansbile
+## Ansible
 
 In the [ansible](ansible) directory you will find a set of Ansible playbooks to deploy Ceramic nodes on a set of servers.
 
