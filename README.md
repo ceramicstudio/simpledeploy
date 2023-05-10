@@ -1,4 +1,4 @@
-# ceramic-infra-scripts
+# SimpleDeploy
 
 This repository contains scripts to help with the deployment of Ceramic nodes.
 
