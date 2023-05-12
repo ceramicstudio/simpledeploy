@@ -18,7 +18,7 @@ configMapGenerator:
 images:
   - name: 3boxben/composedb
     newName: 3boxben/composedb@sha256
-    newTag: d404fb8c8c1c49a02002365032a315d5d0e680e2b9bb3cf776d9bd39665f3c4c
+    newTag: c9b94137e1e44cfc77895ca2f1a48f00bc289f5c349bb0295d2786b660c2ad7b
   - name: postgres/postgres
     newName: postgres
     newTag: 15-alpine
