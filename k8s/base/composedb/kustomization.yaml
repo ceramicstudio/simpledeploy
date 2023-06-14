@@ -16,9 +16,9 @@ configMapGenerator:
       - ./composedb.env
 
 images:
-  - name: 3boxben/composedb
-    newName: 3boxben/composedb@sha256
-    newTag: c9b94137e1e44cfc77895ca2f1a48f00bc289f5c349bb0295d2786b660c2ad7b
+  - name: ceramicnetwork/composedb
+    newName: ceramicnetwork/composedb
+    newTag: dev
   - name: postgres/postgres
     newName: postgres
     newTag: 15-alpine
