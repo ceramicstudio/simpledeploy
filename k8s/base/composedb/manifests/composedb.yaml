@@ -19,7 +19,7 @@ spec:
     spec:
       initContainers:
         - name: init-composedb-config
-          image: 3boxben/composedb
+          image: ceramicnetwork/composedb
           resources:
             limits:
               cpu: 250m
@@ -60,7 +60,7 @@ spec:
                   key: password
       containers:
         - name: composedb
-          image: 3boxben/composedb
+          image: ceramicnetwork/composedb
           command:
             - "/js-ceramic/packages/cli/bin/ceramic.js"
             - "daemon"
