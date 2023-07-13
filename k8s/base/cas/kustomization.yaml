@@ -1,0 +1,21 @@
+---
+namespace: ceramic-anchor-service
+
+resources:
+  - ./manifests/cas-api.yaml
+  - ./manifests/runner.yaml
+  - ./manifests/postgres.yaml
+  - ./manifests/ipfs.yaml
+
+configMapGenerator:
+  - name: cas-env
+    envs:
+      - ./cas.env
+
+images:
+  - name: postgres/postgres
+    newName: postgres
+    newTag: 15-alpine
+  - name: ipfs/ipfs
+    newName: ceramicnetwork/go-ipfs-daemon
+    newTag: 538cf226150f06df0fcec862dcad3505bd14b2ac

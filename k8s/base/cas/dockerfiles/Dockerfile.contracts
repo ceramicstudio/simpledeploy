@@ -1,0 +1,23 @@
+FROM rust
+
+RUN
+
+# TODO
+curl -L https://foundry.paradigm.xyz | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+source /root/.bashrc
+nvm install 16
+
+git clone https://github.com/ceramicnetwork/ceramic-anchor-service.git
+cd ceramic-anchor-service
+npm run installContractDep
+
+export ETH_WALLET_PK=$(cat /run/secrets/ETH_WALLET_PK)
+export ETH_RPC_HOST=$(cat /run/secrets/ETH_RPC_HOST)
+cd contracts
+forge create --legacy CeramicAnchorServiceV2 --contracts src/CeramicAnchorServiceV2.sol --private-key ${ETH_WALLET_PK} --rpc-url ${ETH_RPC_HOST}
+
+Deployer: 0x8e6CEE274EaB78e92c549fe3a5Be552B2C17adE8
+Deployed to: 0x7a69A98d0D9CAe26c10A95dE02d53A476A16fF74
+Transaction hash: 0xc057200868b17ef68a82a01a3a32c53d5d312b9ec253874b7792d212c0ef509c
+

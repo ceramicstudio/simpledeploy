@@ -1,0 +1,26 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: runner
+  labels:
+    app: runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runner
+  template:
+    metadata:
+      labels:
+        app: runner
+    spec:
+      containers:
+        - name: runner
+          image: rust
+          command: ["/bin/sh", "-c", "sleep infinity"]
+          resources:
+            limits:
+              cpu: "2"
+              ephemeral-storage: 1Gi
+              memory: 4Gi

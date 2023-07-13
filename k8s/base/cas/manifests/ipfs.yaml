@@ -1,0 +1,78 @@
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: ipfs
+  labels:
+    app: ipfs
+spec:
+  replicas: 1
+  serviceName: ipfs
+  selector:
+    matchLabels:
+      app: ipfs
+  template:
+    metadata:
+      labels:
+        app: ipfs
+    spec:
+      containers:
+        - name: ipfs
+          image: ipfs/ipfs
+          resources:
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 512Mi
+          ports:
+            - containerPort: 4001
+              name: swarm
+            - containerPort: 5001
+              name: api
+            - containerPort: 8080
+              name: gateway
+            - containerPort: 9090
+              name: metrics
+          volumeMounts:
+            - name: ipfs-data
+              mountPath: /data/ipfs
+      volumes:
+        - name: ipfs-data
+          persistentVolumeClaim:
+            claimName: ipfs-data
+  volumeClaimTemplates:
+    - metadata:
+        name: ipfs-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ipfs
+  labels:
+    app: ipfs
+spec:
+  selector:
+    app: ipfs
+  ports:
+    - name: swarm
+      port: 4001
+      targetPort: 4001
+    - name: api
+      port: 5001
+      targetPort: 5001
+    - name: gateway
+      port: 8080
+      targetPort: 8080
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+  type: NodePort
