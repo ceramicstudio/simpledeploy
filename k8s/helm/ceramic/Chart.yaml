@@ -1,0 +1,11 @@
+apiVersion: v2
+name: ceramic
+description: Helm Package for Ceramic Node
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+dependencies:
+  - name: postgresql
+    version: 12.12.10
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: postgresql.helm.enabled

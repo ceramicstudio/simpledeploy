@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ceramic.ipfs.fullname" . }}
+  labels:
+    {{- include "ceramic.ipfs.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.ipfs.replicaCount }}
+  serviceName: {{ include "ceramic.ipfs.fullname" . }}
+  selector:
+    matchLabels:
+      {{- include "ceramic.ipfs.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.ipfs.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ceramic.ipfs.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ceramic.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.ipfs.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ include "ceramic.ipfs.name" . }}
+          securityContext:
+            {{- toYaml .Values.ipfs.securityContext | nindent 12 }}
+          image: "{{ .Values.ipfs.image.repository }}:{{ .Values.ipfs.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.ipfs.image.pullPolicy }}
+          ports:
+            - containerPort: 4001
+              name: swarm
+            - containerPort: 5001
+              name: api
+            - containerPort: 8080
+              name: gateway
+            - containerPort: 9090
+              name: metrics
+          livenessProbe:
+            exec:
+              command:
+              - ipfs
+              - dag
+              - stat
+              - /ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 30
+            failureTreshold: 3
+          readinessProbe:
+            exec:
+              command:
+              - ipfs
+              - dag
+              - stat
+              - /ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 30
+            failureTreshold: 3
+          volumeMounts:
+            - name: {{ include "ceramic.ipfs.fullname" . }}-data
+              mountPath: /data/ipfs
+          resources:
+            {{- toYaml .Values.ipfs.resources | nindent 12 }}
+      volumes:
+        - name: {{ include "ceramic.ipfs.fullname" . }}-data
+          persistentVolumeClaim: 
+            {{ if .Values.ipfs.persistence.useExistingClaim.enabled }}claimName: {{ .Values.ipfs.persistence.useExistingClaim.claimName }}
+            {{ else if .Values.ipfs.persistence.useClaimTemplate.enabled }}claimName: {{ .Values.ipfs.persistence.useClaimTemplate.claimName }}{{ end }}
+      {{- with .Values.ipfs.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ipfs.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ipfs.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{ if not .Values.ipfs.persistence.useExistingClaim.enabled }}
+  {{ if .Values.ipfs.persistence.useClaimTemplate.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.ipfs.persistence.useClaimTemplate.claimName }}
+      {{- with .Values.ipfs.persistence.useClaimTemplate.spec }}
+      spec:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{ end }}
+  {{ end }}

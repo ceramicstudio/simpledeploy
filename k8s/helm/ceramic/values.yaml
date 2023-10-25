@@ -1,0 +1,174 @@
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+composedb:
+  replicaCount: 1
+
+  image:
+    repository: ceramicnetwork/composedb
+    pullPolicy: IfNotPresent
+    tag: dev
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  probe:
+    path: /api/v0/node/healthcheck
+
+  persistence:
+    useExistingClaim:
+      enabled: false
+      claimName: ceramic-data
+    useClaimTemplate:
+      enabled: true
+      claimName: ceramic-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+
+  resources:
+    limits:
+      cpu: 250m
+      ephemeral-storage: 1Gi
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      ephemeral-storage: 1Gi
+      memory: 512Mi
+
+  config:
+    corsAllowedOrigins: .*
+    logLevel: "2"
+    metricsExporterEnabled: false
+    network: testnet-clay
+    stateStorePath: /ceramic-data
+
+  env:
+    CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB: "true"
+    CERAMIC_ENABLE_EXPERIMENTAL_SYNC: "true"
+
+  secret:
+    privateKey: "e1196383ce8389169171ad795272b5f1ecdaba50cefaf4960500a0a920f159b8"
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+
+ipfs:
+  replicaCount: 1
+
+  image:
+    repository: ceramicnetwork/go-ipfs-daemon
+    pullPolicy: IfNotPresent
+    tag: e177a93eae03
+
+  service:
+    type: ClusterIP
+    swarm:
+      port: 4001
+    api:
+      port: 5001
+    gateway:
+      port: 8080
+    metrics:
+      port: 9090
+
+  persistence:
+    useExistingClaim:
+      enabled: false
+      claimName: ceramic-ipfs-data
+    useClaimTemplate:
+      enabled: true
+      claimName: ceramic-ipfs-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi
+
+
+  resources:
+    requests:
+      cpu: 250m
+      ephemeral-storage: 1Gi
+      memory: 512Mi
+    limits:
+      cpu: 250m
+      ephemeral-storage: 1Gi
+      memory: 512Mi
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+postgresql:
+  auth:
+    username: ceramic
+    password: postgres
+    host: ceramic-postgresql
+    port: 5432
+    database: ceramic
+  helm:
+    enabled: true
+  externalDB:
+    enabled: false
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: ceramic.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: ceramic-tls
+  #    hosts:
+  #      - ceramic.local
+
+
+
+

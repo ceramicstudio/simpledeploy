@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "ceramic.fullname" . }}
+  labels:
+    {{- include "ceramic.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.composedb.replicaCount }}
+  serviceName: {{ include "ceramic.fullname" . }}
+  selector:
+    matchLabels:
+      {{- include "ceramic.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.composedb.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ceramic.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ceramic.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.composedb.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-composedb-config
+          securityContext:
+            {{- toYaml .Values.composedb.securityContext | nindent 12 }}
+          image: "{{ .Values.composedb.image.repository }}:{{ .Values.composedb.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.composedb.image.pullPolicy }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - "/composedb-init/compose-init.sh"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: {{ include "ceramic.fullname" . }}-init
+              mountPath: /composedb-init
+          envFrom:
+            - configMapRef:
+                name: {{ include "ceramic.fullname" . }}-env
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ceramic.fullname" . }}-admin
+                  key: private-key
+            - name: CERAMIC_INDEXING_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ceramic.fullname" . }}-admin
+                  key: db-username
+            - name: CERAMIC_INDEXING_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ceramic.fullname" . }}-admin
+                  key: db-password
+          resources:
+            {{- toYaml .Values.composedb.resources | nindent 12 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.composedb.securityContext | nindent 12 }}
+          image: "{{ .Values.composedb.image.repository }}:{{ .Values.composedb.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.composedb.image.pullPolicy }}
+          command:
+            - "/js-ceramic/packages/cli/bin/ceramic.js"
+            - "daemon"
+            - "--config"
+            - "/config/daemon-config.json"
+          ports:
+            - containerPort: 7007
+              name: http
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.composedb.probe.path }}
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.composedb.probe.path }}
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 30
+          volumeMounts:
+            - name: {{ include "ceramic.fullname" . }}-data
+              mountPath: "{{ .Values.composedb.config.stateStorePath }}"
+            - name: config-volume
+              mountPath: /config
+          envFrom:
+            - configMapRef:
+                name: {{ include "ceramic.fullname" . }}-env
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ceramic.fullname" . }}-admin
+                  key: private-key
+          resources:
+            {{- toYaml .Values.composedb.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+        - name: {{ include "ceramic.fullname" . }}-init
+          configMap:
+            name: {{ include "ceramic.fullname" . }}-init
+            defaultMode: 0755
+        - name: {{ include "ceramic.fullname" . }}-data
+          persistentVolumeClaim: 
+            {{ if .Values.composedb.persistence.useExistingClaim.enabled }}claimName: {{ .Values.composedb.persistence.useExistingClaim.claimName }}
+            {{ else if .Values.composedb.persistence.useClaimTemplate.enabled }}claimName: {{ .Values.composedb.persistence.useClaimTemplate.claimName }}{{ end }}
+      {{- with .Values.composedb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.composedb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.composedb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{ if not .Values.composedb.persistence.useExistingClaim.enabled }}
+  {{ if .Values.composedb.persistence.useClaimTemplate.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.composedb.persistence.useClaimTemplate.claimName }}
+      {{- with .Values.composedb.persistence.useClaimTemplate.spec }}
+      spec:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{ end }}
+  {{ end }}

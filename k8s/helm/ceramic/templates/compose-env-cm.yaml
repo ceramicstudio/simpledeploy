@@ -1,0 +1,12 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "ceramic.fullname" . }}-env
+  labels:
+    {{- include "ceramic.labels" . | nindent 4 }}
+data:
+    {{- with .Values.composedb.env }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    CERAMIC_IPFSHOST: http://{{ include "ceramic.ipfs.fullname" . }}:{{ .Values.ipfs.service.api.port }}
