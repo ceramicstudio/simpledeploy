@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: js-ceramic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: js-ceramic
+  serviceName: js-ceramic
+  template:
+    metadata:
+      labels:
+        app: js-ceramic
+    spec:
+      containers:
+        - name: js-ceramic
+          command:
+            - /js-ceramic/packages/cli/bin/ceramic.js
+            - daemon
+            - --config
+            - /config/daemon-config.json
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: db
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: ceramic-postgres-auth
+          image: ceramicnetwork/js-ceramic:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/v0/node/healthcheck
+              port: api
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 30
+          ports:
+            - containerPort: 7007
+              name: api
+              protocol: TCP
+            - containerPort: 9464
+              name: metrics
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/v0/node/healthcheck
+              port: api
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 30
+          resources:
+            limits:
+              ephemeral-storage: 3Gi
+            requests:
+              ephemeral-storage: 3Gi
+          volumeMounts:
+            - mountPath: /config
+              name: config-volume
+            - mountPath: /js-ceramic-data
+              name: js-ceramic-data
+      initContainers:
+        - name: init-ceramic-config
+          command:
+            - /bin/bash
+            - -c
+            - /js-ceramic-init/js-ceramic-init.sh
+          env:
+            - name: CERAMIC_ADMIN_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: private-key
+                  name: ceramic-admin
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: db
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: ceramic-postgres-auth
+          envFrom:
+            - configMapRef:
+                name: js-ceramic-env
+          image: ceramicnetwork/composedb-cli:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              ephemeral-storage: 3Gi
+            requests:
+              ephemeral-storage: 3Gi
+          volumeMounts:
+            - mountPath: /config
+              name: config-volume
+            - mountPath: /js-ceramic-init
+              name: js-ceramic-init
+      securityContext:
+        fsGroup: 70
+      volumes:
+        - emptyDir: {}
+          name: config-volume
+        - configMap:
+            defaultMode: 493
+            name: js-ceramic-init
+          name: js-ceramic-init
+        - name: js-ceramic-data
+          persistentVolumeClaim:
+            claimName: js-ceramic-data
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: js-ceramic-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        volumeMode: Filesystem
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: js-ceramic
+spec:
+  ports:
+    - name: api
+      port: 7007
+      protocol: TCP
+      targetPort: api
+    - name: metrics
+      port: 9464
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    app: js-ceramic
+  type: ClusterIP

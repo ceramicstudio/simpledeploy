@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rust-ceramic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rust-ceramic
+  serviceName: rust-ceramic
+  template:
+    metadata:
+      labels:
+        app: rust-ceramic
+    spec:
+      containers:
+        - name: rust-ceramic
+          envFrom:
+            - configMapRef:
+                name: rust-ceramic-env
+          image: public.ecr.aws/r5b3e0r5/3box/ceramic-one:0.14.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4001
+              name: swarm-tcp
+              protocol: TCP
+            - containerPort: 5001
+              name: rpc
+              protocol: TCP
+            - containerPort: 9465
+              name: metrics
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              ephemeral-storage: 1Gi
+              memory: 1Gi
+            requests:
+              cpu: "1"
+              ephemeral-storage: 1Gi
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /data/rust-ceramic
+              name: rust-ceramic-data
+      volumes:
+        - name: rust-ceramic-data
+          persistentVolumeClaim:
+            claimName: rust-ceramic-pvc
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: rust-ceramic-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ceramic
+spec:
+  ports:
+    - name: swarm-tcp
+      port: 4001
+      protocol: TCP
+      targetPort: swarm-tcp
+    - name: rpc
+      port: 5001
+      protocol: TCP
+      targetPort: rpc
+    - name: metrics
+      port: 9465
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    app: rust-ceramic
