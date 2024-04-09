@@ -30,6 +30,16 @@ spec:
             - containerPort: 9465
               name: metrics
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ceramic/liveness
+              port: rpc
+              scheme: HTTP
+          readinessProbe:
+            httpGet:
+              path: /ceramic/liveness
+              port: rpc
+              scheme: HTTP
           resources:
             limits:
               cpu: "1"
