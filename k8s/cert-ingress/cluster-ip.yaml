@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: composedb
+  namespace: ceramic
+  labels:
+    app: composedb
+spec:
+  ports:
+    - name: composedb
+      protocol: TCP
+      port: 7007
+      targetPort: 7007
+  selector:
+    app: composedb
+  type: ClusterIP
+
