@@ -1,0 +1,42 @@
+{
+  "anchor": {
+    "auth-method": "did"
+  },
+  "http-api": {
+    "cors-allowed-origins": [
+      ".*"
+    ],
+    "admin-dids": [
+      {% for did in admin_dids -%}
+        "{{ did }}"{% if not loop.last %},
+      {% endif -%}{% endfor -%}
+    ]
+  },
+  "ipfs": {
+    "mode": "remote",
+    "host": "http://localhost:5001",
+    "disable-peer-data-sync": false
+  },
+  "logger": {
+    "log-level": 2,
+    "log-to-files": false
+  },
+  "metrics": {
+    "metrics-exporter-enabled": true,
+    "metrics-port": 9090
+  },
+  "network": {
+    "name": "{{ ceramic_network }}"
+  },
+  "node": {
+    "privateSeedUrl": "inplace:ed25519#{{ ceramic_node_key }}"
+  },
+  "state-store": {
+    "mode": "fs",
+    "local-directory": "{{ ceramic_data_mount_path }}/ceramic_data/statestore/"
+  },
+  "indexing": {
+    "db": "postgresql://{{ceramic_indexing_db_user}}:{{ceramic_indexing_db_pass}}@{{ceramic_indexing_db_host}}:{{ ceramic_indexing_db_port }}",
+    "allow-queries-before-historical-sync": true
+    }
+  }

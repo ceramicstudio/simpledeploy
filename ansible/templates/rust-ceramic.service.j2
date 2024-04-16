@@ -1,0 +1,16 @@
+[Unit]
+Description=rust-ceramic
+After=network-online.target
+
+[Service]
+Type=simple
+User=ceramic
+ExecStart=/usr/local/bin/ceramic-one daemon
+EnvironmentFile={{ceramic_data_mount_path}}/rust-ceramic.env
+
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+NoNewPrivileges=yes
+[Install]
+WantedBy=multi-user.target

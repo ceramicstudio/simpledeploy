@@ -1,39 +1,4 @@
 ---
-- name: Format and mount block device
-  block:
-    - name: Create persistant data location
-      community.general.filesystem:
-        fstype: ext4
-        dev: "{{ ceramic_data_block_path }}"
-
-    - name: Mount persistant data location
-      ansible.posix.mount:
-        path: "{{ ceramic_data_mount_path }}"
-        src: "{{ ceramic_data_block_path }}"
-        fstype: ext4
-        state: mounted
-  when: ceramic_data_block_path is defined
-
-- name: create user
-  ansible.builtin.user:
-    name: ceramic
-    state: present
-    shell: /bin/bash
-    home: /home/ceramic
-
-- name: Create ceramic_data for persistent data storage
-  ansible.builtin.file:
-    path: "{{ ceramic_data_mount_path }}/ceramic_data/"
-    state: directory
-    owner: ceramic
-  register: ceramic_data_dir
-
-- name: Create indexing for persistent index data
-  ansible.builtin.file:
-    path: "{{ ceramic_data_mount_path }}/indexing/"
-    state: directory
-    owner: ceramic
-  register: index_data_dir
 
 - name: Setup Node
   become: yes
@@ -60,9 +25,9 @@
       args:
         executable: /bin/bash
         chdir: "$HOME"
-        creates: "$HOME/.nvm/versions/node/v{{item}}"
+        creates: "$HOME/.nvm/versions/node/{{item}}"
       loop:
-        - 16.19.0
+        - "{{ ceramic_node_version }}"
       register: install_node_version
 
 - name: Setup Ceramic
@@ -72,13 +37,13 @@
   block:
     - name: Install ceramic
       ansible.builtin.shell: |
-        source ~/.nvm/nvm.sh && npm install -g @composedb/cli@next @ceramicnetwork/cli@next
+        source ~/.nvm/nvm.sh && npm install -g @composedb/cli@{{composedb_cli_version}} @ceramicnetwork/cli@{{js_ceramic_version}}
       args:
         executable: /bin/bash
         chdir: "$HOME"
-        creates: "$HOME/.nvm/versions/node/v{{item}}/bin/ceramic"
+        creates: "$HOME/.nvm/versions/node/{{item}}/bin/ceramic"
       loop:
-        - 16.19.0
+        - "{{ceramic_node_version}}"
       register: install_ceramic_version
 
     - name: Create .ceramic
@@ -88,8 +53,8 @@
 
     - name: Template ceramic daemon.config
       ansible.builtin.template:
-        src: "./configs/ceramic-daemon-config.json.j2"
-        dest: "$HOME/.ceramic/daemon.config.json"
+        src: "ceramic-daemon-config.json.j2"
+        dest: "{{ ceramic_data_mount_path }}/daemon.config.json"
       register: ceramic_daemon_config
 
 - name: "Setup Ceramic systemd unit"
@@ -97,20 +62,20 @@
   block:
     - name: "Template ceramic systemd unit"
       ansible.builtin.template:
-        src: "ceramic.service.j2"
-        dest: "/etc/systemd/system/ceramic.service"
+        src: "js-ceramic.service.j2"
+        dest: "/etc/systemd/system/js-ceramic.service"
       register: ceramic_systemd_unit
 
     - name: "Start and enable ceramic systemd unit"
       ansible.builtin.systemd:
-        name: "ceramic"
+        name: "js-ceramic"
         state: "started"
         enabled: true
         daemon_reload: true
 
 - name: "Start and enable ceramic systemd unit"
   ansible.builtin.systemd:
-    name: "ceramic"
+    name: "js-ceramic"
     state: "restarted"
     enabled: true
     daemon_reload: true

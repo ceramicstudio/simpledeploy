@@ -1,0 +1,62 @@
+---
+
+- name: Create the installation directory if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ ceramic_versions_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Create the rust-ceramic store directory if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ rust_ceramic_store_path }}"
+    state: directory
+    mode: '0755'
+    owner: ceramic
+
+- name: Download the Ceramic package
+  ansible.builtin.get_url:
+    url: "{{ rust_ceramic_download_url }}"
+    dest: "{{ ceramic_versions_path }}/ceramic-one_{{ rust_ceramic_version }}.tar.gz"
+
+- name: Extract the Ceramic package
+  ansible.builtin.unarchive:
+    src: "{{ ceramic_versions_path }}/ceramic-one_{{ rust_ceramic_version }}.tar.gz"
+    dest: "{{ ceramic_versions_path }}"
+    remote_src: yes
+  register: rust_ceramic_extract
+
+- name: Install the Ceramic package
+  ansible.builtin.apt:
+    deb: "{{ ceramic_versions_path }}/ceramic-one.deb"
+    state: present
+  when: rust_ceramic_extract.changed
+  register: rust_ceramic_install
+
+- name: "Setup Ceramic systemd unit"
+  become: yes
+  block:
+    - name: "Template rust-ceramic env"
+      ansible.builtin.template:
+        src: "rust-ceramic.env.j2"
+        dest: "{{ ceramic_data_mount_path }}/rust-ceramic.env"
+      register: rust_ceramic_env
+    - name: "Template ceramic systemd unit"
+      ansible.builtin.template:
+        src: "rust-ceramic.service.j2"
+        dest: "/etc/systemd/system/rust-ceramic.service"
+      register: rust_ceramic_systemd_unit
+
+    - name: "Start and enable ceramic systemd unit"
+      ansible.builtin.systemd:
+        name: "rust-ceramic"
+        state: "started"
+        enabled: true
+        daemon_reload: true
+
+# - name: "Start and enable ceramic systemd unit"
+#   ansible.builtin.systemd:
+#     name: "ceramic"
+#     state: "restarted"
+#     enabled: true
+#     daemon_reload: true
+#   when: ceramic_daemon_config.changed
