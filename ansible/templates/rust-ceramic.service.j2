@@ -5,6 +5,7 @@ After=network-online.target
 [Service]
 Type=simple
 User=ceramic
+LimitNOFILE=65536
 ExecStart=/usr/local/bin/ceramic-one daemon
 EnvironmentFile={{ceramic_data_mount_path}}/rust-ceramic.env
 
