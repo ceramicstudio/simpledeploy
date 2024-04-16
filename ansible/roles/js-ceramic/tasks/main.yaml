@@ -46,11 +46,6 @@
         - "{{ceramic_node_version}}"
       register: install_ceramic_version
 
-    - name: Create .ceramic
-      ansible.builtin.file:
-        path: $HOME/.ceramic
-        state: directory
-
     - name: Template ceramic daemon.config
       ansible.builtin.template:
         src: "ceramic-daemon-config.json.j2"
