@@ -2,7 +2,15 @@
 - hosts: all
   become: true
   roles:
-    - name: ceramic
+    - name: ceramic-prep
       import_role:
-        name: ceramic
-      tags: ceramic
+        name: ceramic-prep
+      tags: ceramic-prep
+    - name: rust-ceramic
+      import_role:
+        name: rust-ceramic
+      tags: rust-ceramic
+    - name: js-ceramic
+      import_role:
+        name: js-ceramic
+      tags: js-ceramic
