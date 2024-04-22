@@ -1,0 +1,68 @@
+---
+- name: Install required packages
+  apt:
+    state: present
+    cache_valid_time: 604800
+    name:
+      - unzip
+      - gpg
+
+- name: Create user
+  user:
+    name: grafana
+    state: present
+
+- name: Install apt key
+  apt_key:
+    url: "https://apt.grafana.com/gpg.key"
+    state: present
+
+- name: Add Grafana repository
+  apt_repository:
+    repo: "deb https://apt.grafana.com stable main"
+    state: present
+    filename: "grafana"
+  register: grafana_repository
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: grafana_repository.changed
+
+- name: Install Grafana agent
+  apt:
+    name: alloy
+    state: present
+
+- name: Template env file
+  template:
+    src: grafana-alloy.env
+    dest: "{{ceramic_data_mount_path}}/grafana-alloy.env"
+  register: env_file
+  notify: Restart Grafana alloy
+
+- name: Template systemd unit file
+  template:
+    src: grafana-alloy.service.j2
+    dest: /lib/systemd/system/alloy.service
+  register: systemd_file
+  notify: Restart Grafana alloy
+
+- name: Template config file
+  template:
+    src: grafana-config.alloy
+    dest: /etc/alloy/config.alloy
+  register: config_file
+  notify: Restart Grafana alloy
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+    state: reloaded
+  when: systemd_file.changed or config_file.changed or env_file.changed
+
+- name: Enable and start alloy service
+  systemd:
+    name: alloy
+    enabled: yes
+    state: started
