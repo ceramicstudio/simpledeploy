@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+    state: reloaded
+
+- name: Restart Grafana alloy
+  systemd:
+    name: alloy
+    state: restarted

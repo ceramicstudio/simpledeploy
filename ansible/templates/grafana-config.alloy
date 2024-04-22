@@ -1,0 +1,53 @@
+// For a full configuration reference, see https://grafana.com/docs/alloy
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+prometheus.exporter.unix "default" {
+  include_exporter_metrics = true
+  disable_collectors       = ["mdadm"]
+}
+
+prometheus.scrape "default" {
+  targets = concat(
+    prometheus.exporter.unix.default.targets,
+    [{
+      // Self-collect metrics
+      job         = "alloy",
+      __address__ = "127.0.0.1:12345",
+    }],
+  )
+  forward_to = [prometheus.remote_write.grafana_cloud_prometheus.receiver]
+}
+
+prometheus.scrape "ceramic" {
+  targets = [
+    {"__address__" = "127.0.0.1:9464"},
+    {"__address__" = "127.0.0.1:9465"},
+  ]
+  forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
+}
+
+prometheus.remote_write "grafana_cloud_prometheus" {
+	// https://grafana.com/docs/agent/latest/flow/reference/components/prometheus.remote_write/
+	endpoint {
+		url = "https://prometheus-us-central1.grafana.net/api/prom/push"
+
+		basic_auth {
+			username = env("GRAFANA_PROM_USERNAME")
+			password = env("GRAFANA_PROM_PASSWORD")
+		}
+	}
+}
+
+prometheus.relabel "replace_instance_with_hostname" {
+  forward_to = [prometheus.remote_write.grafana_cloud_prometheus.receiver]
+
+  rule {
+    action        = "replace"
+    source_labels = ["__address__"]
+    target_label  = "instance"
+    replacement   = env("HOSTNAME")
+  }
+}
