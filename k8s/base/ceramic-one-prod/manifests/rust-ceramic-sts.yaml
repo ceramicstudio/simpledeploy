@@ -18,7 +18,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: rust-ceramic-env
-          image: public.ecr.aws/r5b3e0r5/3box/ceramic-one:0.14.0
+          image: public.ecr.aws/r5b3e0r5/3box/ceramic-one:0.16.0
           imagePullPolicy: Always
           ports:
             - containerPort: 4001
