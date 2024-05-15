@@ -31,3 +31,7 @@ kubectl apply -k .
 kubectl wait --for=condition=ready pod -l app=js-ceramic --all --timeout=600s
 ```
 
+# Limitations
+
+- only deploys 2 nodes
+- does not peer the nodes

@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: rust-ceramic
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: rust-ceramic
@@ -88,3 +88,48 @@ spec:
       targetPort: metrics
   selector:
     app: rust-ceramic
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ceramic-0
+spec:
+  ports:
+    - name: swarm-tcp
+      port: 4001
+      protocol: TCP
+      targetPort: swarm-tcp
+    - name: rpc
+      port: 5001
+      protocol: TCP
+      targetPort: rpc
+    - name: metrics
+      port: 9465
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    app: rust-ceramic
+    statefulset.kubernetes.io/pod-name: rust-ceramic-0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-ceramic-1
+spec:
+  ports:
+    - name: swarm-tcp
+      port: 4001
+      protocol: TCP
+      targetPort: swarm-tcp
+    - name: rpc
+      port: 5001
+      protocol: TCP
+      targetPort: rpc
+    - name: metrics
+      port: 9465
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    app: rust-ceramic
+    statefulset.kubernetes.io/pod-name: rust-ceramic-1
+      
