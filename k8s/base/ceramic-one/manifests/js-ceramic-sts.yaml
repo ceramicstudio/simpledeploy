@@ -41,7 +41,10 @@ spec:
                 secretKeyRef:
                   key: username
                   name: ceramic-postgres-auth
-          image: ceramicnetwork/js-ceramic:latest
+          envFrom:
+            - configMapRef:
+                name: js-ceramic-env                  
+          image: ceramicnetwork/js-ceramic
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
@@ -115,7 +118,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: js-ceramic-env
-          image: ceramicnetwork/composedb-cli:latest
+          image: ceramicnetwork/composedb-cli
           imagePullPolicy: Always
           resources:
             limits:
