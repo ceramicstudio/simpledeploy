@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: js-ceramic
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: js-ceramic
@@ -41,7 +41,10 @@ spec:
                 secretKeyRef:
                   key: username
                   name: ceramic-postgres-auth
-          image: ceramicnetwork/js-ceramic:latest
+          envFrom:
+            - configMapRef:
+                name: js-ceramic-env                  
+          image: ceramicnetwork/js-ceramic
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
@@ -92,6 +95,10 @@ spec:
                 secretKeyRef:
                   key: private-key
                   name: ceramic-admin
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name                  
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
@@ -115,7 +122,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: js-ceramic-env
-          image: ceramicnetwork/composedb-cli:latest
+          image: ceramicnetwork/composedb-cli
           imagePullPolicy: Always
           resources:
             limits:
@@ -169,3 +176,41 @@ spec:
   selector:
     app: js-ceramic
   type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: js-ceramic-0
+spec:
+  ports:
+    - name: api
+      port: 7007
+      protocol: TCP
+      targetPort: api
+    - name: metrics
+      port: 9464
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    app: js-ceramic
+    statefulset.kubernetes.io/pod-name: js-ceramic-0
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: js-ceramic-1
+spec:
+  ports:
+    - name: api
+      port: 7007
+      protocol: TCP
+      targetPort: api
+    - name: metrics
+      port: 9464
+      protocol: TCP
+      targetPort: metrics
+  selector:
+    app: js-ceramic
+    statefulset.kubernetes.io/pod-name: js-ceramic-1
+  type: ClusterIP    
