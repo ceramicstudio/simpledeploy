@@ -49,7 +49,7 @@ all:
     ceramic_versions_path: /ceramic_data_disk/versions
     ceramic_node_version: v20.12.2
     rust_ceramic_store_path: /ceramic_data_disk/ceramic-one
-    rust_ceramic_version: v0.14.0
+    rust_ceramic_version: v0.18.0
     rust_ceramic_download_url: "https://github.com/ceramicnetwork/rust-ceramic/releases/download/{{ rust_ceramic_version }}/ceramic-one_x86_64-unknown-linux-gnu.tar.gz"
     js_ceramic_version: latest
     composedb_cli_version: latest
