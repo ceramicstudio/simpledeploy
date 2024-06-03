@@ -1,0 +1,61 @@
+all:
+  children:
+    js_ceramic:
+      hosts:
+        gitcoin-gcp-js-ceramic-1.3box.io:
+          ceramic_node_key: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            63323530396536306132373134363933613134633634386663643466303565653839623531653265
+            6636633035343637383838626366616163646365353363330a313235613539333834623638616535
+            36656630386334353035633161383531326363633861653963373531346336666639366336643838
+            3034383266383635340a343739313234303037333563353161396563633564303430333830343334
+            62346434643636373937353531376662323132373463373630373563346662623838353735656232
+            62326632613766363861333731363134613035393932363461386636323966386230313630336536
+            62636266376466303732356534626366313837636163363534353635626164333930376664626439
+            38346365363339393664
+        gitcoin-gcp-js-ceramic-2.3box.io:
+          ceramic_node_key: !vault |
+            $ANSIBLE_VAULT;1.1;AES256
+            34663431383831376465326534633531376466336237336236316661366565363562376432623763
+            6230626137366634616432303161343138393237363638330a313065303263333733303666643838
+            36336664323865383937336463373731656130633736396362313032363738336131653264386465
+            6566653362636265650a393863356464366162336638616263353237643737373166393032626537
+            64366538613866383664623238326534313933386132313864353566613762386436616462356464
+            39626362386532623639656236313763616465303365656564323837653039626461393064396365
+            65343239386466343366386138633833613337363838316364643438636437666237613638633339
+            35343231656632303432
+      vars:
+        js_ceramic_data_block_path: /dev/disk/by-id/google-js-ceramic-data
+        js_ceramic_data_mount_path: /js_ceramic_data_disk
+        js_ceramic_version: latest
+        ceramic_node_version: v20.12.2
+        ipfs_host: "{{ internal_hostname.replace('js-ceramic-', 'rust-ceramic-') }}"
+    rust_ceramic:
+      hosts:
+        gitcoin-gcp-rust-ceramic-1.3box.io:
+        gitcoin-gcp-rust-ceramic-2.3box.io:
+      vars:
+        rust_ceramic_data_block_path: /dev/disk/by-id/google-rust-ceramic-data
+        rust_ceramic_data_mount_path: /rust_ceramic_data_disk
+        rust_ceramic_store_path: /rust_ceramic_data_disk/ceramic-one
+        rust_ceramic_version: v0.20.0
+        rust_ceramic_download_url: "https://github.com/ceramicnetwork/rust-ceramic/releases/download/{{ rust_ceramic_version }}/ceramic-one_x86_64-unknown-linux-gnu.tar.gz"
+
+  vars:
+    internal_hostname: "{{ inventory_hostname.split('.')[0].replace('gitcoin-gcp-', '') }}"
+    ceramic_versions_path: /tmp
+    ceramic_network: testnet-clay
+    composedb_cli_version: latest
+    admin_dids:
+      - did
+    ceramic_indexing_db_user: postgres
+    ceramic_indexing_db_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          36383533616335346565636634643063303233663835363830353639333463353861333233306462
+          6130356164383134386336353433373130306533613330340a376230663532623761643161343461
+          30643937306431313931633937353338613763373734323466306264313830373166316230383533
+          3731333839663837360a633031356563643131303733343634336663663039336163646165366462
+          64646232353062346231393934303864646431663231633832373433346538383766
+    ceramic_indexing_db_host: 10.4.0.3
+    ceramic_indexing_db_port: 5432
+    js_ceramic_db_string: "postgres://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ internal_hostname }}"

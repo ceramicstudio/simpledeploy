@@ -38,7 +38,7 @@
     - name: "Template rust-ceramic env"
       ansible.builtin.template:
         src: "rust-ceramic.env.j2"
-        dest: "{{ ceramic_data_mount_path }}/rust-ceramic.env"
+        dest: "{{ rust_ceramic_data_mount_path }}/rust-ceramic.env"
       register: rust_ceramic_env
     - name: "Template ceramic systemd unit"
       ansible.builtin.template:

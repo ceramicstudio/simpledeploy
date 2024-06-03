@@ -6,10 +6,18 @@
       import_role:
         name: ceramic-prep
       tags: ceramic-prep
+
+- hosts: rust_ceramic
+  become: true
+  roles:
     - name: rust-ceramic
       import_role:
         name: rust-ceramic
       tags: rust-ceramic
+
+- hosts: js_ceramic
+  become: true
+  roles:
     - name: js-ceramic
       import_role:
         name: js-ceramic
