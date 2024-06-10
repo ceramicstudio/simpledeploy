@@ -22,3 +22,7 @@
       import_role:
         name: js-ceramic
       tags: js-ceramic
+    - name: caddy
+      import_role:
+        name: caddy
+      tags: caddy
