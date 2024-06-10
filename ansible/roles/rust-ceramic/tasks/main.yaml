@@ -2,7 +2,7 @@
 
 - name: Create the installation directory if it doesn't exist
   ansible.builtin.file:
-    path: "{{ ceramic_versions_path }}"
+    path: "{{ ceramic_versions_path }}/versions"
     state: directory
     mode: '0755'
 

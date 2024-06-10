@@ -37,7 +37,7 @@
 - name: Template env file
   template:
     src: grafana-alloy.env
-    dest: "{{ceramic_data_mount_path}}/grafana-alloy.env"
+    dest: "/etc/alloy/grafana-alloy.env"
   register: env_file
   notify: Restart Grafana alloy
 
@@ -58,7 +58,6 @@
 - name: Reload systemd
   systemd:
     daemon_reload: yes
-    state: reloaded
   when: systemd_file.changed or config_file.changed or env_file.changed
 
 - name: Enable and start alloy service

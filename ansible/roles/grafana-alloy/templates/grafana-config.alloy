@@ -6,7 +6,17 @@ logging {
 
 prometheus.exporter.unix "default" {
   include_exporter_metrics = true
-  disable_collectors       = ["mdadm"]
+  disable_collectors       = [
+    "arp",
+    "bcache",
+    "bonding",
+    "btrfs",
+    "mdadm",
+    "nfs",
+    "nfsd",
+    "powersupplyclass",
+    "thermal_zone",
+    ]
 }
 
 prometheus.scrape "default" {
@@ -18,7 +28,7 @@ prometheus.scrape "default" {
       __address__ = "127.0.0.1:12345",
     }],
   )
-  forward_to = [prometheus.remote_write.grafana_cloud_prometheus.receiver]
+  forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
 
 prometheus.scrape "ceramic" {
@@ -48,6 +58,37 @@ prometheus.relabel "replace_instance_with_hostname" {
     action        = "replace"
     source_labels = ["__address__"]
     target_label  = "instance"
-    replacement   = env("HOSTNAME")
+    replacement   = "{{ inventory_hostname }}"
+  }
+}
+
+loki.relabel "journal" {
+  forward_to = []
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+  rule {
+    action        = "drop"
+    source_labels = ["unit"]
+    regex         = "sshd"
+  }
+  rule {
+    action        = "replace"
+    source_labels = ["__address__"]
+    target_label  = "instance"
+    replacement   = "{{ inventory_hostname }}"
+  }
+}
+
+loki.source.journal "read"  {
+  forward_to    = [loki.write.endpoint.receiver]
+  relabel_rules = loki.relabel.journal.rules
+  labels        = {component = "loki.source.journal"}
+}
+
+loki.write "endpoint" {
+  endpoint {
+    url = "https://{{grafana_loki_username}}:{{grafana_loki_password}}@logs-prod3.grafana.net/loki/api/v1/push"
   }
 }
