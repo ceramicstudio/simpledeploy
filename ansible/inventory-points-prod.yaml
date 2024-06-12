@@ -33,7 +33,11 @@ all:
     rust_ceramic:
       hosts:
         points-prod-rust-ceramic-1.3box.io:
+          peers:
+            - /dns4/points-prod-rust-ceramic-2-internal.3box.io/tcp/4001/p2p/12D3KooWDJsoy6tjgbdoLMEXPHqJu9mNLuUV9m4yuJXKpk3sLCCW
         points-prod-rust-ceramic-2.3box.io:
+          peers:
+            - /dns4/points-prod-rust-ceramic-1-internal.3box.io/tcp/4001/p2p/12D3KooWLLHDT5Adnwvk8tCeiX6HomH2NrvgxcLNjKGAfUHa5Z3X
       vars:
         rust_ceramic_data_block_path: /dev/disk/by-id/google-rust-ceramic-data
         rust_ceramic_data_mount_path: /rust_ceramic_data_disk
