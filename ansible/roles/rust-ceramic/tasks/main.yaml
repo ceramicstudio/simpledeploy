@@ -53,10 +53,10 @@
         enabled: true
         daemon_reload: true
 
-# - name: "Start and enable ceramic systemd unit"
-#   ansible.builtin.systemd:
-#     name: "ceramic"
-#     state: "restarted"
-#     enabled: true
-#     daemon_reload: true
-#   when: ceramic_daemon_config.changed
+- name: "Start and enable rust-ceramic systemd unit"
+  ansible.builtin.systemd:
+    name: "rust-ceramic"
+    state: "restarted"
+    enabled: true
+    daemon_reload: true
+  when: rust_ceramic_env.changed or rust_ceramic_systemd_unit.changed
