@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - name: ceramic-prep
+      import_role:
+        name: ceramic-prep
+      tags: ceramic-prep
+
+- hosts: tnet, mainnet
+  become: true
+  roles:
+    - name: rust-ceramic
+      import_role:
+        name: rust-ceramic
+      tags: rust-ceramic
+
