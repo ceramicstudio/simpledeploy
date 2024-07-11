@@ -1,0 +1,14 @@
+[Unit]
+Description=Bootstrap UI
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/ceramic-one-ui
+ExecStart=/opt/ceramic-one-ui/.venv/bin/python /opt/ceramic-one-ui/main.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+MemoryLimit=100M
+
+[Install]
+WantedBy=multi-user.target
