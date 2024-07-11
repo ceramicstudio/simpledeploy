@@ -7,7 +7,7 @@
         name: ceramic-prep
       tags: ceramic-prep
 
-- hosts: tnet, mainnet
+- hosts: all
   become: true
   roles:
     - name: rust-ceramic
