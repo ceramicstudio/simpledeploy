@@ -1,0 +1,49 @@
+---
+- name: Install python venv
+  apt:
+    name: python3-venv
+    state: present
+
+- name: Create app directory
+  file:
+    path: /opt/ceramic-one-ui
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy app files
+  copy:
+    src: "{{ item }}"
+    dest: /opt/ceramic-one-ui
+  with_items:
+    - files/
+  register: copy_result
+
+- name: Create a virtual environment
+  shell: python3 -m venv /opt/ceramic-one-ui/.venv
+  args:
+    creates: /opt/ceramic-one-ui/.venv
+
+- name: Install requirements
+  pip:
+    requirements: /opt/ceramic-one-ui/requirements.txt
+    virtualenv: /opt/ceramic-one-ui/.venv
+  register: pip_result
+
+- name: Template systemd service file
+  copy:
+    src: bootstrap-ui.service
+    dest: /etc/systemd/system/bootstrap-ui.service
+
+- name: Enable and start the service
+  systemd:
+    name: bootstrap-ui
+    state: started
+    enabled: true
+
+- name: Restart the service when changed
+  systemd:
+    name: bootstrap-ui
+    state: restarted
+  when: copy_result.changed or pip_result.changed
