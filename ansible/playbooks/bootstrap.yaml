@@ -15,3 +15,12 @@
         name: rust-ceramic
       tags: rust-ceramic
 
+    - name: bootstrap-ui
+      import_role:
+        name: bootstrap-ui
+      tags: bootstrap-ui
+
+    - name: caddy
+      import_role:
+        name: caddy
+      tags: caddy

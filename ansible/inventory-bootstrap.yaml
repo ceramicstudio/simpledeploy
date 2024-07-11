@@ -22,6 +22,8 @@ all:
         ceramic_network: mainnet
 
   vars:
+    caddy_proxy_port: 8000
+    caddy_tls_email: infra@3box.io
     internal_hostname: "{{ inventory_hostname.split('.')[0].replace('gitcoin-gcp-', '') }}"
     ceramic_versions_path: /tmp
     grafana_prom_username: 656697
