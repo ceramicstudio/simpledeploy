@@ -6,12 +6,21 @@
     state: directory
     mode: '0755'
 
-- name: Create the rust-ceramic store directory if it doesn't exist
+- name: Create the rust-ceramic directories if they don't exist
   ansible.builtin.file:
-    path: "{{ rust_ceramic_store_path }}"
+    path: "{{ item }}"
     state: directory
     mode: '0755'
     owner: ceramic
+  loop:
+    - "{{ rust_ceramic_store_path }}"
+    - "{{ rust_ceramic_pk_dir }}"
+
+- name: Write the rust-ceramic pk to the pk dir
+  ansible.builtin.copy:
+    content: "{{ lookup('gcp_secret', gcp_project, rust_ceramic_pk_name) }}"
+    dest: "{{ rust_ceramic_pk_dir }}/id_ed25519_0"
+  no_log: true # Don't log the private key
 
 - name: Download the Ceramic package
   ansible.builtin.get_url:
