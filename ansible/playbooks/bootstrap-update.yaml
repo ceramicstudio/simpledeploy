@@ -1,0 +1,18 @@
+---
+- hosts: devqa
+  serial: 1
+  become: true
+  roles:
+    - rust-ceramic
+
+- hosts: tnet
+  serial: 1
+  become: true
+  roles:
+    - rust-ceramic
+
+- hosts: mainnet
+  serial: 1
+  become: true
+  roles:
+    - rust-ceramic

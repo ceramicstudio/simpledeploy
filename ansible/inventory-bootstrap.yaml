@@ -13,6 +13,7 @@ all:
       vars:
         ceramic_network: testnet-clay
         gcp_project: tnet-prod-2024
+        ssh_key_cd_pub: "{{ lookup('gcp_secret', gcp_project, 'bootstrap-tnet-prod-id_rsa-pub') }}"
     mainnet:
       hosts:
         bootstrap-mainnet-rust-ceramic-1.3box.io:
@@ -26,6 +27,7 @@ all:
       vars:
         ceramic_network: mainnet
         gcp_project: tnet-prod-2024
+        ssh_key_cd_pub: "{{ lookup('gcp_secret', gcp_project, 'bootstrap-tnet-prod-id_rsa-pub') }}"
     devqa:
       hosts:
         bootstrap-devqa-rust-ceramic-1.3box.io:
@@ -39,6 +41,7 @@ all:
       vars:
         ceramic_network: dev-unstable
         gcp_project: dev-qa-2023
+        ssh_key_cd_pub: "{{ lookup('gcp_secret', gcp_project, 'bootstrap-devqa-id_rsa-pub') }}"
 
   vars:
     caddy_proxy_port: 8000

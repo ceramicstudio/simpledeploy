@@ -63,3 +63,22 @@
         state: directory
         owner: ceramic
   when: rust_ceramic_data_block_path is defined
+
+- name: Add CD user
+  block:
+    - name: Add Ansible user
+      ansible.builtin.user:
+        name: ansible
+        state: present
+        shell: /bin/bash
+        home: /home/ansible
+    - name: Add Ansible user to sudoers
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        line: "ansible ALL=(ALL) NOPASSWD:ALL"
+        state: present
+    - name: Update user's authorized_keys
+      ansible.builtin.authorized_key:
+        user: ansible
+        key: "{{ ssh_key_cd_pub }}"
+  when: ssh_key_cd_pub is defined
