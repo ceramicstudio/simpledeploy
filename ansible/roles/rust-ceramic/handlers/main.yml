@@ -1,0 +1,5 @@
+---
+- name: restart-rust-ceramic
+  ansible.builtin.systemd:
+    name: rust-ceramic
+    state: restarted
