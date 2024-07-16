@@ -12,5 +12,5 @@ spec:
   ports:
   - name: swarm-tcp
     protocol: TCP
-    port: 4001
-    targetPort: 4001
+    port: 4101
+    targetPort: 4101

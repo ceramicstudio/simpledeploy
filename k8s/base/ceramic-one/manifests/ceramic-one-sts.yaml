@@ -21,10 +21,10 @@ spec:
           image: ceramicnetwork/ceramic-one
           imagePullPolicy: Always
           ports:
-            - containerPort: 4001
+            - containerPort: 4101
               name: swarm-tcp
               protocol: TCP
-            - containerPort: 5001
+            - containerPort: 5101
               name: rpc
               protocol: TCP
             - containerPort: 9465
@@ -75,11 +75,11 @@ metadata:
 spec:
   ports:
     - name: swarm-tcp
-      port: 4001
+      port: 4101
       protocol: TCP
       targetPort: swarm-tcp
     - name: rpc
-      port: 5001
+      port: 5101
       protocol: TCP
       targetPort: rpc
     - name: metrics
@@ -96,11 +96,11 @@ metadata:
 spec:
   ports:
     - name: swarm-tcp
-      port: 4001
+      port: 4101
       protocol: TCP
       targetPort: swarm-tcp
     - name: rpc
-      port: 5001
+      port: 5101
       protocol: TCP
       targetPort: rpc
     - name: metrics
@@ -118,11 +118,11 @@ metadata:
 spec:
   ports:
     - name: swarm-tcp
-      port: 4001
+      port: 4101
       protocol: TCP
       targetPort: swarm-tcp
     - name: rpc
-      port: 5001
+      port: 5101
       protocol: TCP
       targetPort: rpc
     - name: metrics
