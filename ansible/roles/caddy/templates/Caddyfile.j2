@@ -1,4 +1,4 @@
 {{ inventory_hostname }} {
-    reverse_proxy localhost:7007
-    tls infra@3box.io
+    reverse_proxy localhost:{{ caddy_proxy_port }}
+    tls {{ caddy_tls_email }}
 }

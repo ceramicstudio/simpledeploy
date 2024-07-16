@@ -6,17 +6,31 @@
     state: directory
     mode: '0755'
 
-- name: Create the rust-ceramic store directory if it doesn't exist
+- name: Create the rust-ceramic directories if they don't exist
   ansible.builtin.file:
-    path: "{{ rust_ceramic_store_path }}"
+    path: "{{ item }}"
     state: directory
     mode: '0755'
     owner: ceramic
+  loop:
+    - "{{ rust_ceramic_store_path }}"
+    - "{{ rust_ceramic_pk_dir }}"
+
+- name: Write the rust-ceramic pk to the pk dir
+  ansible.builtin.copy:
+    content: "{{ lookup('gcp_secret', gcp_project, rust_ceramic_pk_name) }}"
+    dest: "{{ rust_ceramic_pk_dir }}/id_ed25519_0"
+  no_log: true # Don't log the private key
+
+- name: Get latest rust-ceramic release
+  ansible.builtin.set_fact:
+    rust_ceramic_version: "{{ lookup('github_latest_release', 'ceramicnetwork/rust-ceramic') }}"
 
 - name: Download the Ceramic package
   ansible.builtin.get_url:
     url: "{{ rust_ceramic_download_url }}"
     dest: "{{ ceramic_versions_path }}/ceramic-one_{{ rust_ceramic_version }}.tar.gz"
+  notify: restart-rust-ceramic
 
 - name: Extract the Ceramic package
   ansible.builtin.unarchive:
@@ -31,6 +45,7 @@
     state: present
   when: rust_ceramic_extract.changed
   register: rust_ceramic_install
+  notify: restart-rust-ceramic
 
 - name: "Setup Ceramic systemd unit"
   become: yes
