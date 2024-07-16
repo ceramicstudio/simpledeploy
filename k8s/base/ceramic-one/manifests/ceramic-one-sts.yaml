@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: rust-ceramic
+  name: ceramic-one
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: rust-ceramic
-  serviceName: rust-ceramic
+      app: ceramic-one
+  serviceName: ceramic-one
   template:
     metadata:
       labels:
-        app: rust-ceramic
+        app: ceramic-one
     spec:
       containers:
-        - name: rust-ceramic
+        - name: ceramic-one
           envFrom:
             - configMapRef:
-                name: rust-ceramic-env
-          image: ceramicnetwork/rust-ceramic
+                name: ceramic-one-env
+          image: ceramicnetwork/ceramic-one
           imagePullPolicy: Always
           ports:
             - containerPort: 4001
@@ -50,17 +50,17 @@ spec:
               ephemeral-storage: 1Gi
               memory: 1Gi
           volumeMounts:
-            - mountPath: /data/rust-ceramic
-              name: rust-ceramic-data
+            - mountPath: /data/ceramic-one
+              name: ceramic-one-data
       volumes:
-        - name: rust-ceramic-data
+        - name: ceramic-one-data
           persistentVolumeClaim:
-            claimName: rust-ceramic-pvc
+            claimName: ceramic-one-pvc
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
       metadata:
-        name: rust-ceramic-data
+        name: ceramic-one-data
       spec:
         accessModes:
           - ReadWriteOnce
@@ -71,7 +71,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rust-ceramic
+  name: ceramic-one
 spec:
   ports:
     - name: swarm-tcp
@@ -87,12 +87,12 @@ spec:
       protocol: TCP
       targetPort: metrics
   selector:
-    app: rust-ceramic
+    app: ceramic-one
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: rust-ceramic-0
+  name: ceramic-one-0
 spec:
   ports:
     - name: swarm-tcp
@@ -108,13 +108,13 @@ spec:
       protocol: TCP
       targetPort: metrics
   selector:
-    app: rust-ceramic
-    statefulset.kubernetes.io/pod-name: rust-ceramic-0
+    app: ceramic-one
+    statefulset.kubernetes.io/pod-name: ceramic-one-0
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: rust-ceramic-1
+  name: ceramic-one-1
 spec:
   ports:
     - name: swarm-tcp
@@ -130,6 +130,5 @@ spec:
       protocol: TCP
       targetPort: metrics
   selector:
-    app: rust-ceramic
-    statefulset.kubernetes.io/pod-name: rust-ceramic-1
-      
+    app: ceramic-one
+    statefulset.kubernetes.io/pod-name: ceramic-one-1
