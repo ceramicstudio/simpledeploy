@@ -7,7 +7,7 @@ images:
   - name: ceramicnetwork/js-ceramic
     newName: ceramicnetwork/js-ceramic
     newTag: "latest"
-  - name: ceramicnetwork/rust-ceramic
+  - name: ceramicnetwork/ceramic-one
     newName: public.ecr.aws/r5b3e0r5/3box/ceramic-one
     newTag: "0.17.0"
   - name: postgres
@@ -16,17 +16,17 @@ images:
 
 resources:
   - ./manifests/js-ceramic-sts.yaml
-  - ./manifests/rust-ceramic-sts.yaml
-  - ./manifests/rust-ceramic-lb.yaml
+  - ./manifests/ceramic-one-sts.yaml
+  - ./manifests/ceramic-one-lb.yaml
   - ./manifests/postgres-sts.yaml
 
 configMapGenerator:
   - name: js-ceramic-env
     envs:
       - ./envs/js-ceramic.env
-  - name: rust-ceramic-env
+  - name: ceramic-one-env
     envs:
-      - ./envs/rust-ceramic.env
+      - ./envs/ceramic-one.env
   - name: js-ceramic-init
     files:
       - ./files/daemon-config.json
