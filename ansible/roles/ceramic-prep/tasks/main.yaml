@@ -15,7 +15,7 @@
     shell: /bin/bash
     home: /home/ceramic
 
-- name: Format and mount js-cermaic block device
+- name: Format and mount js-ceramic block device
   block:
     - name: Create persistant data location
       community.general.filesystem:
