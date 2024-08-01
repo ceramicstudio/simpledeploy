@@ -1,0 +1,51 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "ceramic.fullname" . }}-init
+  labels:
+    {{- include "ceramic.labels" . | nindent 4 }}
+data:
+  compose-init.sh: |
+    #!/bin/bash
+
+    set -eo pipefail
+
+    export CERAMIC_ADMIN_DID=$(composedb did:from-private-key ${CERAMIC_ADMIN_PRIVATE_KEY})
+
+    CERAMIC_ADMIN_DID=$CERAMIC_ADMIN_DID envsubst < /composedb-init/daemon-config.json > /config/daemon-config.json
+  daemon-config.json: |-
+    {
+        "anchor": {},
+        "http-api": {
+            "cors-allowed-origins": [
+                "{{ .Values.composedb.config.corsAllowedOrigins }}"
+            ],
+            "admin-dids": [
+                "${CERAMIC_ADMIN_DID}"
+            ]
+        },
+        "ipfs": {
+            "mode": "remote",
+            "host": "${CERAMIC_IPFSHOST}"
+        },
+        "logger": {
+            "log-level": {{ .Values.composedb.config.logLevel }},
+            "log-to-files": false
+        },
+        "metrics": {
+            "metrics-exporter-enabled": {{ .Values.composedb.config.metricsExporterEnabled }}
+        },
+        "network": {
+            "name": "{{ .Values.composedb.config.network }}"
+        },
+        "node": {},
+        "state-store": {
+            "mode": "fs",
+            "local-directory": "{{ .Values.composedb.config.stateStorePath }}"
+        },
+        "indexing": {
+            "db": "postgres://${CERAMIC_INDEXING_DB_USERNAME}:${CERAMIC_INDEXING_DB_PASSWORD}@{{ .Values.postgresql.auth.host }}/{{ .Values.postgresql.auth.database }}",
+            "allow-queries-before-historical-sync": true
+        }
+    }

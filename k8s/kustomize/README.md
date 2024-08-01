@@ -1,4 +1,4 @@
-# k8s
+# kustomize
 
 The `base` directory contains the kubernetes manifests for the Ceramic HDS service. The `overlays` directory contains the manifests for different, example, configurations.
 
