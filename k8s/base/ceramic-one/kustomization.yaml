@@ -18,6 +18,7 @@ resources:
   - ./manifests/js-ceramic-sts.yaml
   - ./manifests/ceramic-one-sts.yaml
   - ./manifests/ceramic-one-lb.yaml
+  - ./manifests/js-ceramic-lb.yaml
   - ./manifests/postgres-sts.yaml
 
 configMapGenerator:

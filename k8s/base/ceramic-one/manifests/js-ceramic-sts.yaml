@@ -43,7 +43,7 @@ spec:
                   name: ceramic-postgres-auth
           envFrom:
             - configMapRef:
-                name: js-ceramic-env                  
+                name: js-ceramic-env
           image: ceramicnetwork/js-ceramic
           imagePullPolicy: Always
           livenessProbe:
@@ -98,7 +98,7 @@ spec:
             - name: MY_POD_NAME
               valueFrom:
                 fieldRef:
-                  fieldPath: metadata.name                  
+                  fieldPath: metadata.name
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
@@ -213,4 +213,4 @@ spec:
   selector:
     app: js-ceramic
     statefulset.kubernetes.io/pod-name: js-ceramic-1
-  type: ClusterIP    
+  type: ClusterIP
