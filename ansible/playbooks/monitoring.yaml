@@ -6,3 +6,8 @@
       import_role:
         name: grafana-alloy
       tags: grafana-alloy
+      vars:
+        grafana_prom_username: "{{ lookup('gcp_secret', gcp_project, 'grafana-prom-username') }}"
+        grafana_prom_password: "{{ lookup('gcp_secret', gcp_project, 'grafana-prom-password') }}"
+        grafana_loki_username: "{{ lookup('gcp_secret', gcp_project, 'grafana-loki-username') }}"
+        grafana_loki_password: "{{ lookup('gcp_secret', gcp_project, 'grafana-loki-password') }}"
