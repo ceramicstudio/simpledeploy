@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 Type=simple
 User=ceramic
-ExecStart=/home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/bin/node /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/@ceramicnetwork/cli/bin/ceramic.js daemon --config {{ js_ceramic_data_mount_path }}/daemon.config.json
+ExecStart=/home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/bin/node /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/@ceramicnetwork/cli/bin/ceramic.js daemon --config {{ data_store_mount_path }}/daemon.config.json
 Environment=CERAMIC_ENABLE_EXPERIMENTAL_SYNC=true
 Environment=CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB=true
 Environment=CERAMIC_RECON_MODE=true

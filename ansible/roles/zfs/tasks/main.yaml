@@ -1,0 +1,74 @@
+---
+- name: Add contrib repository
+  ansible.builtin.apt_repository:
+    repo: deb https://deb.debian.org/debian {{ ansible_distribution_release }} contrib
+    state: present
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install Linux headers
+  apt:
+    name:
+      - "linux-headers-{{ ansible_kernel }}"
+    state: present
+
+- name: Install ZFS tools
+  apt:
+    name:
+      - zfsutils-linux
+    state: present
+
+- name: Check if ZFS is correctly installed
+  command: modprobe zfs
+  register: zfs_module
+  ignore_errors: no
+  changed_when: false
+
+- name: Check if ZFS pool exists
+  command: zpool list {{ zfs_pool_name }}
+  register: zpool_exists
+  ignore_errors: yes
+  changed_when: false
+  when: zfs_module.rc == 0
+
+- name: Create ZFS pool
+  command: zpool create {{ zfs_pool_name }} {{ zfs_devices | join(' ') }}
+  when: zpool_exists.rc != 0
+
+- name: Create ZFS filesystem
+  zfs:
+    name: "{{ zfs_pool_name }}/data-store"
+    state: present
+
+- name: Check current mountpoint
+  command: zfs get -H -o value mountpoint {{ zfs_pool_name }}/data-store
+  register: current_mountpoint
+  changed_when: false
+  failed_when: false
+
+- name: Set mountpoint for filesystem
+  command: zfs set mountpoint={{ data_store_mount_path }} {{ zfs_pool_name }}/data-store
+  when:
+    - current_mountpoint.rc == 0  # Only if the previous command succeeded
+    - current_mountpoint.stdout != data_store_mount_path
+  register: set_mountpoint_result
+  failed_when:
+    - set_mountpoint_result.rc != 0
+    - "'pool or dataset is busy' not in set_mountpoint_result.stderr"
+
+- name: Set ZFS properties
+  zfs:
+    name: "{{ zfs_pool_name }}/data-store"
+    extra_zfs_properties:
+      compression: lz4
+      atime: off
+
+- name: Ensure store directory exists
+  file:
+    path: "{{ data_store_mount_path }}"
+    state: directory
+    owner: ceramic
+    group: ceramic
+    mode: '0755'

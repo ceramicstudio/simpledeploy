@@ -1,0 +1,13 @@
+version: '3'
+services:
+  go-ipfs:
+    image: {{ go_ipfs_image }}
+    container_name: go-ipfs
+    restart: always
+    ports:
+      - "4101:4101"
+      - "5101:5101"
+    volumes:
+      - {{ data_store_mount_path }}:/data/ipfs
+    env_file:
+      - {{ data_store_mount_path }}/go-ipfs.env

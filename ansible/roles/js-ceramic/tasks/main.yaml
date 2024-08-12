@@ -49,7 +49,7 @@
     - name: Template ceramic daemon.config
       ansible.builtin.template:
         src: "ceramic-daemon-config.json.j2"
-        dest: "{{ js_ceramic_data_mount_path }}/daemon.config.json"
+        dest: "{{ data_store_mount_path }}/daemon.config.json"
       register: ceramic_daemon_config
 
 - name: "Setup Ceramic systemd unit"

@@ -1,0 +1,44 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - name: ceramic-prep
+      import_role:
+        name: ceramic-prep
+      tags: ceramic-prep
+    - name: zfs
+      import_role:
+        name: zfs
+      tags: zfs
+
+- hosts: rust_ceramic
+  become: true
+  roles:
+    - name: rust-ceramic
+      import_role:
+        name: rust-ceramic
+      tags: rust-ceramic
+
+- hosts: go_ipfs
+  become: true
+  roles:
+    - name: docker
+      import_role:
+        name: docker
+      tags: docker
+    - name: go-ipfs
+      import_role:
+        name: go-ipfs
+      tags: go-ipfs
+
+- hosts: js_ceramic
+  become: true
+  roles:
+    - name: js-ceramic
+      import_role:
+        name: js-ceramic
+      tags: js-ceramic
+    - name: caddy
+      import_role:
+        name: caddy
+      tags: caddy
