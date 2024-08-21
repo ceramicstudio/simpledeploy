@@ -144,3 +144,7 @@ all:
       62323632323863623766353266623063306162643735306532313162656361363661653961343930
       33303731636532623734626533646263356164666130363864646561623636376432
     js_ceramic_db_string: "postgres://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ internal_hostname }}"
+    grafana_prom_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-username') }}"
+    grafana_prom_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-password') }}"
+    grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
+    grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"
