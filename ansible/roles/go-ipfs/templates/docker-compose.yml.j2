@@ -7,7 +7,15 @@ services:
     ports:
       - "4101:4101"
       - "5101:5101"
+      - "8101:8101"
     volumes:
-      - {{ data_store_mount_path }}:/data/ipfs
+      # The "ipfs-data" at the end is for compatibility with the HireNodes ZFS volume configuration
+      - {{ data_store_mount_path }}/ipfs-data:/data/ipfs
     env_file:
       - {{ data_store_mount_path }}/go-ipfs.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8101/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

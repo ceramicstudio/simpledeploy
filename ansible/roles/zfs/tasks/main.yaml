@@ -61,6 +61,7 @@
 - name: Set ZFS properties
   zfs:
     name: "{{ zfs_pool_name }}/data-store"
+    state: present
     extra_zfs_properties:
       compression: lz4
       atime: off

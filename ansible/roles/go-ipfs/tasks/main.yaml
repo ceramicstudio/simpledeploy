@@ -25,14 +25,33 @@
     dest: "{{ data_store_mount_path }}/go-ipfs.env"
   register: go_ipfs_env
 
+- name: Check if go-ipfs container is running
+  ansible.builtin.shell:
+    cmd: docker ps --filter "name=go-ipfs" --format '{% raw %}{{.Names}}{% endraw %}'
+  register: container_status
+  changed_when: false
+
 - name: Start go-ipfs Docker container
   ansible.builtin.shell:
     cmd: docker-compose up -d
     chdir: /opt/go-ipfs
   register: docker_compose_result
+  when: container_status.stdout == ""
 
 - name: Restart go-ipfs container if config changed
-  ansible.builtin.shell:
-    cmd: docker-compose up -d --force-recreate
-    chdir: /opt/go-ipfs
+  block:
+    - name: Stop go-ipfs container
+      ansible.builtin.shell:
+        cmd: docker-compose stop go-ipfs
+        chdir: /opt/go-ipfs
+      
+    - name: Remove go-ipfs container
+      ansible.builtin.shell:
+        cmd: docker-compose rm -f go-ipfs
+        chdir: /opt/go-ipfs
+      
+    - name: Start go-ipfs container
+      ansible.builtin.shell:
+        cmd: docker-compose up -d go-ipfs
+        chdir: /opt/go-ipfs
   when: docker_compose_file.changed or go_ipfs_env.changed

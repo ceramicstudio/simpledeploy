@@ -10,6 +10,10 @@
       import_role:
         name: zfs
       tags: zfs
+    - name: grafana-alloy
+      import_role:
+        name: grafana-alloy
+      tags: grafana-alloy
 
 - hosts: rust_ceramic
   become: true
