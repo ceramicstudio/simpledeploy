@@ -53,7 +53,7 @@
   failed_when: false
 
 - name: Set mountpoints for filesystems
-  command: zfs set mountpoint={{ data_store_mount_path }} {{ item.item.name }}/data-store
+  command: zfs set mountpoint={{ item.mount_path }} {{ item.item.name }}/data-store
   loop: "{{ current_mountpoints.results }}"
   when:
     - item.rc == 0

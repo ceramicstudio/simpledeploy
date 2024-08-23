@@ -24,21 +24,29 @@ all:
           - name: ceramiconepool
             devices:
               - /dev/disk/by-id/google-js-ceramic-data
+            mount_path: /js_ceramic_datastore
     rust_ceramic:
       hosts:
         gitcoin-rust-ceramic-1.3boxlabs.com:
+          peers:
+            - "/dns4/gitcoin-rust-ceramic-2.3boxlabs.com/tcp/{{ swarm_port }}/p2p/12D3KooWFYcuMUU4bMrCp5hp8oG4DgxKqRosN82xpgL2VB2xrTva"
           zfs_pools:
             - name: ceramiconepool
               devices:
                 - /dev/disk/by-id/google-rust-ceramic-data
+              mount_path: /rust_ceramic_datastore
             - name: migrationpool
               devices:
                 - /dev/disk/by-id/google-migration-staging
+              mount_path: /migration_datastore
         gitcoin-rust-ceramic-2.3boxlabs.com:
+          peers:
+            - "/dns4/gitcoin-rust-ceramic-1.3boxlabs.com/tcp/{{ swarm_port }}/p2p/12D3KooWHSogFBTJKFH2vabKrpYVhxzPSrijy1CzT29i2wWdRFcK"
           zfs_pools:
             - name: ceramiconepool
               devices:
                 - /dev/disk/by-id/google-rust-ceramic-data
+              mount_path: /rust_ceramic_datastore
       vars:
         data_store_mount_path: /ceramic_one_datastore
         healthcheck_fqdn: "{{ internal_host_fqdn }}"
@@ -63,6 +71,7 @@ all:
           - name: ipfspool
             devices:
               - /dev/disk/by-id/google-go-ipfs-data
+            mount_path: /go_ipfs_datastore
 
   vars:
     admin_dids:
@@ -76,7 +85,7 @@ all:
     ceramic_indexing_db_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-password') }}"
     ceramic_indexing_db_port: 5432
     ceramic_indexing_db_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-user') }}"
-    ceramic_indexing_db_string: "postgres://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ internal_hostname }}"
+    ceramic_indexing_db_string: "postgres://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ external_hostname }}"
     ceramic_node_1_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-1-private-key') }}"
     ceramic_node_2_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-2-private-key') }}"
     ceramic_node_3_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-3-private-key') }}"
