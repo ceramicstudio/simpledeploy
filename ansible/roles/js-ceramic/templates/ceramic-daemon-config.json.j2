@@ -14,7 +14,7 @@
   },
   "ipfs": {
     "mode": "remote",
-    "host": "http://{{ ipfs_host }}:5001",
+    "host": "{{ ipfs_host }}",
     "disable-peer-data-sync": false
   },
   "logger": {
@@ -38,5 +38,5 @@
   "indexing": {
     "db": "{{ js_ceramic_db_string }}",
     "allow-queries-before-historical-sync": true
-    }
   }
+}

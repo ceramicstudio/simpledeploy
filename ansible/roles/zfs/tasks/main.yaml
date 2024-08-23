@@ -26,47 +26,53 @@
   ignore_errors: no
   changed_when: false
 
-- name: Check if ZFS pool exists
-  command: zpool list {{ zfs_pool_name }}
+- name: Check if ZFS pools exist
+  command: zpool list {{ item.name }}
+  loop: "{{ zfs_pools }}"
   register: zpool_exists
   ignore_errors: yes
   changed_when: false
   when: zfs_module.rc == 0
 
-- name: Create ZFS pool
-  command: zpool create {{ zfs_pool_name }} {{ zfs_devices | join(' ') }}
-  when: zpool_exists.rc != 0
+- name: Create ZFS pools
+  command: zpool create {{ item.item.name }} {{ item.item.devices | join(' ') }}
+  loop: "{{ zpool_exists.results }}"
+  when: item.rc != 0 and item is failed
 
-- name: Create ZFS filesystem
+- name: Create ZFS filesystems
   zfs:
-    name: "{{ zfs_pool_name }}/data-store"
+    name: "{{ item.name }}/data-store"
     state: present
+  loop: "{{ zfs_pools }}"
 
-- name: Check current mountpoint
-  command: zfs get -H -o value mountpoint {{ zfs_pool_name }}/data-store
-  register: current_mountpoint
+- name: Check current mountpoints
+  command: zfs get -H -o value mountpoint {{ item.name }}/data-store
+  loop: "{{ zfs_pools }}"
+  register: current_mountpoints
   changed_when: false
   failed_when: false
 
-- name: Set mountpoint for filesystem
-  command: zfs set mountpoint={{ data_store_mount_path }} {{ zfs_pool_name }}/data-store
+- name: Set mountpoints for filesystems
+  command: zfs set mountpoint={{ data_store_mount_path }} {{ item.item.name }}/data-store
+  loop: "{{ current_mountpoints.results }}"
   when:
-    - current_mountpoint.rc == 0  # Only if the previous command succeeded
-    - current_mountpoint.stdout != data_store_mount_path
-  register: set_mountpoint_result
+    - item.rc == 0
+    - item.stdout != data_store_mount_path
+  register: set_mountpoint_results
   failed_when:
-    - set_mountpoint_result.rc != 0
-    - "'pool or dataset is busy' not in set_mountpoint_result.stderr"
+    - item.rc != 0
+    - "'pool or dataset is busy' not in item.stderr"
 
 - name: Set ZFS properties
   zfs:
-    name: "{{ zfs_pool_name }}/data-store"
+    name: "{{ item.name }}/data-store"
     state: present
     extra_zfs_properties:
       compression: lz4
       atime: off
+  loop: "{{ zfs_pools }}"
 
-- name: Ensure store directory exists
+- name: Ensure store directories exist
   file:
     path: "{{ data_store_mount_path }}"
     state: directory

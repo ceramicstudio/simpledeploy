@@ -46,3 +46,11 @@
       import_role:
         name: caddy
       tags: caddy
+
+- hosts: all
+  become: true
+  roles:
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck
