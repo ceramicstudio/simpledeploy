@@ -1,0 +1,89 @@
+---
+- name: Stop js-ceramic-3 node
+  ansible.builtin.systemd:
+    name: js-ceramic
+    state: stopped
+  when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
+
+- name: Stop go-ipfs-1 node
+  ansible.builtin.systemd:
+    name: go-ipfs
+    state: stopped
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
+- name: Stream PG backup from remote Postgres node to GCP SQL DB
+  ansible.builtin.shell:
+    cmd: |
+      ssh -i {{ hirenodes_pg_ssh_key }} root@{{ hirenodes_pg_host }} \
+      "PGPASSWORD='{{ hirenodes_pg_password }}' pg_dump -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} --clean --if-exists" | \
+      PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }}
+  when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
+  delegate_to: localhost
+  register: pg_stream_result
+  failed_when: pg_stream_result.rc != 0
+  no_log: true  # This prevents the command (which includes passwords) from being logged
+
+- name: Stream and apply Ceramic statestore from remote js-ceramic node
+  ansible.builtin.shell:
+    cmd: |
+      ssh -i {{ ceramic_ssh_key }} root@{{ ceramic_remote_host }} \
+      "tar -czf - -C {{ ceramic_statestore_path }} ." | \
+      tar -xzf - -C {{ data_store_mount_path }}
+  when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
+  register: ceramic_stream_result
+  failed_when: ceramic_stream_result.rc != 0
+
+- name: Get current timestamp
+  ansible.builtin.set_fact:
+    timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
+- name: Backup IPFS config file with timestamp
+  ansible.builtin.copy:
+    src: "{{ data_store_mount_path }}/ipfs-data/config"
+    dest: "/home/{{ ansible_user }}/ipfs_config_backup_{{ timestamp }}"
+    remote_src: yes
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
+- name: Get latest snapshot on remote machine
+  ansible.builtin.shell:
+    cmd: ssh root@{{ hirenodes_ipfs_host }} "zfs list -H -t snapshot -o name ipfs/ipfs | sort | tail -n 1"
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+  register: remote_latest_snapshot
+  changed_when: false
+  delegate_to: localhost
+
+- name: Transfer latest ZFS snapshot
+  ansible.builtin.shell:
+    cmd: |
+      ssh root@{{ hirenodes_ipfs_host }} "zfs send -i ipfs/ipfs@initial {{ remote_latest_snapshot.stdout }}" | \
+      zfs receive -F ipfspool/data-store
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+  register: zfs_transfer_result
+  failed_when: zfs_transfer_result.rc != 0
+
+- name: Restore IPFS config file
+  ansible.builtin.copy:
+    src: "/home/{{ ansible_user }}/ipfs_config_backup_{{ timestamp }}"
+    dest: "{{ data_store_mount_path }}/ipfs-data/config"
+    remote_src: yes
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
+- name: Create symlink to latest config backup
+  ansible.builtin.file:
+    src: "/home/{{ ansible_user }}/ipfs_config_backup_{{ timestamp }}"
+    dest: "/home/{{ ansible_user }}/ipfs_config_backup_latest"
+    state: link
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
+- name: Start go-ipfs-1 node
+  ansible.builtin.systemd:
+    name: go-ipfs
+    state: started
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
+- name: Start js-ceramic-3 node
+  ansible.builtin.systemd:
+    name: js-ceramic
+    state: started
+  when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'

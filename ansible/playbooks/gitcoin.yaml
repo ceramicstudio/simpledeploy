@@ -54,3 +54,31 @@
       import_role:
         name: healthcheck
       tags: healthcheck
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: migration
+      import_role:
+        name: migration
+      tags: migration
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck
+
+- hosts:
+    - gitcoin-js-ceramic-4.3boxlabs.com
+    - gitcoin-go-ipfs-2.3boxlabs.com
+  become: true
+  roles:
+    - name: backup
+      import_role:
+        name: backup
+      tags: backup
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck

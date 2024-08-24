@@ -11,6 +11,9 @@ all:
         gitcoin-js-ceramic-3.3boxlabs.com:
           ceramic_node_key: "{{ ceramic_node_3_key }}"
           ipfs_host: "{{ hostvars[groups['go_ipfs'][0]]['internal_host_fqdn'] }}:{{ api_port }}"
+        gitcoin-js-ceramic-4.3boxlabs.com:
+          ceramic_node_key: "{{ ceramic_node_4_key }}"
+          ipfs_host: "{{ hostvars[groups['go_ipfs'][1]]['internal_host_fqdn'] }}:{{ api_port }}"
       vars:
         ceramic_node_version: v20.12.2
         data_store_mount_path: /js_ceramic_datastore
@@ -57,6 +60,7 @@ all:
     go_ipfs:
       hosts:
         gitcoin-go-ipfs-1.3boxlabs.com:
+        gitcoin-go-ipfs-2.3boxlabs.com:
       vars:
         data_store_mount_path: /go_ipfs_datastore
         image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
@@ -75,10 +79,12 @@ all:
       - did:key:z6MkpceokHtmVRx2rm3gLwC2pNEyRsLFwi3bZesjvnCirEcb
       - did:key:z6MkpUfCbACwkjmHBNPMcCMebeiLgPnUD65gNCVs3jhARntp
       - did:key:z6MkgCCLpMLZJmwicT33owyWBhRpP3tPSWCsvMHLyNWDCJuE
+      - did:key:z6MkmpnA3pj5RkLbjDbgyDZfZCUy8wh7NmG56KA6vdSwYBRe
     api_port: 5101
     swarm_port: 4101
     ceramic_network: mainnet
     ceramic_indexing_db_host: 10.127.0.3
+    ceramic_indexing_db_name: "{{ external_hostname }}"
     ceramic_indexing_db_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-password') }}"
     ceramic_indexing_db_port: 5432
     ceramic_indexing_db_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-user') }}"
@@ -97,3 +103,16 @@ all:
     external_host_fqdn: "{{ external_hostname }}.{{ domain }}"
     internal_hostname: "{{ external_hostname }}-internal"
     internal_host_fqdn: "{{ internal_hostname }}.{{ domain }}"
+    # Hirenodes PG
+    hirenodes_pg_ssh_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-private-key') }}"
+    hirenodes_pg_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-host') }}"
+    hirenodes_pg_database: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-database') }}"
+    hirenodes_pg_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-user') }}"
+    hirenodes_pg_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-password') }}"
+    # Hirenodes Ceramic
+    hirenodes_ceramic_ssh_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ceramic-private-key') }}"
+    hirenodes_ceramic_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ceramic-host') }}"
+    hirenodes_ceramic_statestore_path: /root/.ceramic/statestore
+    # Hirenodes IPFS
+    hirenodes_ipfs_ssh_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ipfs-private-key') }}"
+    hirenodes_ipfs_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ipfs-host') }}"
