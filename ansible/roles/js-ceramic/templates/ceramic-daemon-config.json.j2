@@ -14,7 +14,7 @@
   },
   "ipfs": {
     "mode": "remote",
-    "host": "{{ ipfs_host }}",
+    "host": "http://{{ ipfs_host }}",
     "disable-peer-data-sync": false
   },
   "logger": {
@@ -23,7 +23,7 @@
   },
   "metrics": {
     "prometheus-exporter-enabled": true,
-    "prometheus-exporter-port": 9464
+    "prometheus-exporter-port": {{ metrics_port }}
   },
   "network": {
     "name": "{{ ceramic_network }}"

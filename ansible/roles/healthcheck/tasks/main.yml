@@ -1,7 +1,7 @@
 ---
 - name: Check healthcheck endpoint
   uri:
-    url: "http://{{ healthcheck_fqdn }}:{{ healthcheck_port }}{{ healthcheck_path }}"
+    url: "http://localhost:{{ healthcheck_port }}{{ healthcheck_path }}"
     method: GET
   register: health_check
   ignore_errors: no
@@ -10,13 +10,13 @@
   debug:
     msg:
       - "Host: {{ inventory_hostname }}"
-      - "Healthcheck endpoint: http://{{ healthcheck_fqdn }}:{{ healthcheck_port }}{{ healthcheck_path }}"
+      - "Healthcheck endpoint: http://localhost:{{ healthcheck_port }}{{ healthcheck_path }}"
       - "Status: {{ health_check.status | default('N/A') }}"
       - "Response: {{ health_check.content | default('N/A') | truncate(100) }}"
 
 - name: Check metrics endpoint
   uri:
-    url: "http://{{ internal_host_fqdn }}:{{ metrics_port }}{{ metrics_path }}"
+    url: "http://localhost:{{ metrics_port }}{{ metrics_path }}"
     method: GET
   register: metrics_check
   ignore_errors: no
@@ -25,6 +25,6 @@
   debug:
     msg:
       - "Host: {{ inventory_hostname }}"
-      - "Metrics endpoint: http://{{ internal_host_fqdn }}:{{ metrics_port }}{{ metrics_path }}"
+      - "Metrics endpoint: http://localhost:{{ metrics_port }}{{ metrics_path }}"
       - "Status: {{ metrics_check.status | default('N/A') }}"
       - "Response: {{ metrics_check.content | default('N/A') | truncate(100) }}"

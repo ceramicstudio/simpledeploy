@@ -14,7 +14,6 @@ all:
       vars:
         ceramic_node_version: v20.12.2
         data_store_mount_path: /js_ceramic_datastore
-        healthcheck_fqdn: "{{ external_host_fqdn }}"
         healthcheck_path: /api/v0/node/healthcheck
         healthcheck_port: 7007
         js_ceramic_version: 6.4.0
@@ -49,7 +48,6 @@ all:
               mount_path: /rust_ceramic_datastore
       vars:
         data_store_mount_path: /ceramic_one_datastore
-        healthcheck_fqdn: "{{ internal_host_fqdn }}"
         healthcheck_path: /ceramic/liveness
         healthcheck_port: "{{ api_port }}"
         metrics_path: /metrics
@@ -62,11 +60,10 @@ all:
       vars:
         data_store_mount_path: /go_ipfs_datastore
         image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
-        healthcheck_fqdn: "{{ internal_host_fqdn }}"
         healthcheck_path: /healthcheck
-        healthcheck_port: 8101
+        healthcheck_port: 8011
         metrics_port: "{{ api_port }}"
-        metrics_path: /debug/metrics
+        metrics_path: /debug/metrics/prometheus
         zfs_pools:
           - name: ipfspool
             devices:
