@@ -22,15 +22,22 @@
   failed_when: pg_stream_result.rc != 0
   no_log: true  # This prevents the command (which includes passwords) from being logged
 
-- name: Stream and apply Ceramic statestore from remote js-ceramic node
+- name: Get latest Ceramic snapshot on remote machine
+  ansible.builtin.shell:
+    cmd: ssh gitcoin-js-ceramic-3.3boxlabs.com -i ~/.ssh/google_compute_engine "zfs list -H -t snapshot -o name ceramiconepool/data-store | sort | tail -n 1"
+  when: inventory_hostname == 'gitcoin-js-ceramic-4.3boxlabs.com'
+  register: remote_latest_snapshot
+  changed_when: false
+  delegate_to: localhost
+
+- name: Transfer latest ZFS snapshot
   ansible.builtin.shell:
     cmd: |
-      ssh -i {{ ceramic_ssh_key }} root@{{ ceramic_remote_host }} \
-      "tar -czf - -C {{ ceramic_statestore_path }} ." | \
-      tar -xzf - -C {{ data_store_mount_path }}
+      ssh gitcoin-js-ceramic-3.3boxlabs.com -i ~/.ssh/google_compute_engine "zfs send -i ceramiconepool/data-store@initial {{ remote_latest_snapshot.stdout }}" | \
+      zfs receive -F ceramiconepool/data-store
   when: inventory_hostname == 'gitcoin-js-ceramic-4.3boxlabs.com'
-  register: ceramic_stream_result
-  failed_when: ceramic_stream_result.rc != 0
+  register: zfs_transfer_result
+  failed_when: zfs_transfer_result.rc != 0
 
 - name: Get current timestamp
   ansible.builtin.set_fact:
@@ -46,7 +53,7 @@
 
 - name: Get latest snapshot on remote machine
   ansible.builtin.shell:
-    cmd: ssh root@{{ hirenodes_ipfs_host }} "zfs list -H -t snapshot -o name ipfs/ipfs | sort | tail -n 1"
+    cmd: ssh gitcoin-go-ipfs-1.3boxlabs.com -i ~/.ssh/google_compute_engine "zfs list -H -t snapshot -o name ipfspool/data-store | sort | tail -n 1"
   when: inventory_hostname == 'gitcoin-go-ipfs-2.3boxlabs.com'
   register: remote_latest_snapshot
   changed_when: false
@@ -55,7 +62,7 @@
 - name: Transfer latest ZFS snapshot
   ansible.builtin.shell:
     cmd: |
-      ssh root@{{ hirenodes_ipfs_host }} "zfs send -i ipfs/ipfs@initial {{ remote_latest_snapshot.stdout }}" | \
+      ssh gitcoin-go-ipfs-1.3boxlabs.com -i ~/.ssh/google_compute_engine "zfs send -i ipfspool/data-store@initial {{ remote_latest_snapshot.stdout }}" | \
       zfs receive -F ipfspool/data-store
   when: inventory_hostname == 'gitcoin-go-ipfs-2.3boxlabs.com'
   register: zfs_transfer_result
