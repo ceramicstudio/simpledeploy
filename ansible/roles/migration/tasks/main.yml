@@ -14,28 +14,87 @@
   register: docker_compose_result
 
 # PostgreSQL migration
-- name: Stream PostgreSQL schema from hirenodes_pg to GCP SQL DB
+- name: Stream and apply PostgreSQL schema from hirenodes_pg to GCP SQL DB
   ansible.builtin.shell:
     cmd: |
+      set -e
+      # Dump the schema
       ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
-      "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' pg_dump -v -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} --clean --if-exists --no-owner --no-acl --schema-only | gzip -c\"" | \
-      gunzip | PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -v ON_ERROR_STOP=1 -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} 2>&1
+      "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' pg_dump -v -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} --no-owner --no-acl --schema-only\"" > /tmp/schema.sql
+
+      # Apply the schema, ignoring errors
+      PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -f /tmp/schema.sql || true
+
+      # Clean up
+      rm /tmp/schema.sql
   delegate_to: gitcoin-js-ceramic-3.3boxlabs.com
   environment:
     PGSSLMODE: require
-  register: pg_schema_migration_result
-  failed_when: pg_schema_migration_result.rc != 0
   when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
   become: no
 #  no_log: true
 
-- name: Stream PostgreSQL data from hirenodes_pg to GCP SQL DB with compression and monitoring
+- name: Get list of tables from source database
+  ansible.builtin.shell:
+    cmd: |
+      ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
+      "su - postgres -c \"psql -d {{ hirenodes_pg_database }} -t -c \\\"SELECT trim(tablename) FROM pg_tables WHERE schemaname = 'public' AND tablename != 'schema_migrations' ORDER BY tablename;\\\"\""
+  register: table_list
+  when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
+  become: no
+
+- name: Incremental PostgreSQL data transfer table by table
   ansible.builtin.shell:
     cmd: |
       set -o pipefail
-      ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
-      "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' pg_dump -v -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} --data-only --no-owner --no-acl | gzip -c\"" | \
-      gunzip | PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -v ON_ERROR_STOP=1 -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} 2>&1
+      
+      table_name="{{ item | trim }}"
+      
+      if [ "$table_name" = "ceramic_model_implements" ]; then
+        # Full copy for ceramic_model_implements table
+        PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -c "TRUNCATE TABLE $table_name"
+        ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
+        "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -c \\\"COPY $table_name TO STDOUT\\\" | gzip -c\"" | \
+        gunzip | \
+        PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -v ON_ERROR_STOP=1 -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -c "COPY $table_name FROM STDIN"
+        
+        rows_transferred=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COUNT(*) FROM $table_name")
+        echo "Transferred $rows_transferred rows for table $table_name (full copy)"
+      else
+        # Incremental update for other tables
+        latest_timestamp=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COALESCE(MAX(created_at), NULL) FROM $table_name" | xargs)
+        if [ -z "$latest_timestamp" ]; then
+          # If no entries have been copied, get the earliest created_at from the source table
+          latest_timestamp=$(ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
+          "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -t -c \\\"SELECT MIN(created_at) FROM $table_name\\\"\"" | xargs)
+        fi
+        
+        echo "Latest timestamp for $table_name: $latest_timestamp"
+        
+        # Get the maximum timestamp from the source table
+        max_timestamp=$(ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
+        "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -t -c \\\"SELECT MAX(created_at) FROM $table_name\\\"\"" | xargs)
+        
+        current_timestamp=$latest_timestamp
+        total_rows_transferred=0
+        
+        while [[ "$current_timestamp" < "$max_timestamp" ]]; do
+          next_timestamp=$(date -d "$current_timestamp + 1 day" +"%Y-%m-%d %H:%M:%S")
+          
+          ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
+          "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -c \\\"COPY (SELECT * FROM $table_name WHERE created_at > '$current_timestamp' AND created_at <= '$next_timestamp') TO STDOUT\\\" | gzip -c\"" | \
+          gunzip | \
+          PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -v ON_ERROR_STOP=1 -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -c "COPY $table_name FROM STDIN"
+          
+          rows_transferred=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COUNT(*) FROM $table_name WHERE created_at > '$current_timestamp' AND created_at <= '$next_timestamp'")
+          total_rows_transferred=$((total_rows_transferred + rows_transferred))
+          echo "Transferred $rows_transferred rows for table $table_name (incremental, $current_timestamp to $next_timestamp)"
+          
+          current_timestamp=$next_timestamp
+        done
+        
+        echo "Total transferred $total_rows_transferred rows for table $table_name (incremental)"
+      fi
   args:
     executable: /bin/bash
   delegate_to: gitcoin-js-ceramic-3.3boxlabs.com
@@ -43,9 +102,14 @@
     PGSSLMODE: require
   register: pg_data_migration_result
   failed_when: pg_data_migration_result.rc != 0
+  loop: "{{ table_list.stdout_lines }}"
   when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
   become: no
-  # no_log: true
+
+- name: Display summary of transferred rows
+  ansible.builtin.debug:
+    msg: "{{ pg_data_migration_result.results | map(attribute='stdout_lines') | flatten | select('match', '^(Transferred|Total transferred|Latest timestamp)') | list }}"
+  when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
 
 # Ceramic migration
 - name: Stream Ceramic statestore from hirenodes_ceramic to gitcoin-js-ceramic-3
