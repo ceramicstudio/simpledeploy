@@ -48,10 +48,20 @@
     cmd: |
       set -o pipefail
       
+      # Set up reverse SSH tunnel from gitcoin to hirenodes
+      ssh -f -N -R 5433:{{ ceramic_indexing_db_host }}:5432 -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }}
+      if [ $? -ne 0 ]; then
+        echo "Failed to establish SSH tunnel"
+        exit 1
+      fi
+
+      # Ensure tunnel is closed on exit
+      trap 'ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} "pkill -f \"ssh -f -N -R 5433:{{ ceramic_indexing_db_host }}:5432\""' EXIT
+      
       table_name="{{ item | trim }}"
       
-      if [ "$table_name" = "ceramic_model_implements" ]; then
-        # Full copy for ceramic_model_implements table
+      if [[ "$table_name" =~ ^(ceramic_model_implements|ceramic_config|ceramic_models)$ ]]; then
+        # Full copy for specified tables
         PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -c "TRUNCATE TABLE $table_name"
         ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
         "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -c \\\"COPY $table_name TO STDOUT\\\" | gzip -c\"" | \
@@ -61,39 +71,41 @@
         rows_transferred=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COUNT(*) FROM $table_name")
         echo "Transferred $rows_transferred rows for table $table_name (full copy)"
       else
-        # Incremental update for other tables
-        latest_timestamp=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COALESCE(MAX(created_at), NULL) FROM $table_name" | xargs)
-        if [ -z "$latest_timestamp" ]; then
-          # If no entries have been copied, get the earliest created_at from the source table
-          latest_timestamp=$(ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
-          "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -t -c \\\"SELECT MIN(created_at) FROM $table_name\\\"\"" | xargs)
-        fi
+        # Get the latest timestamp from the destination table
+        latest_timestamp=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COALESCE(TO_CHAR(GREATEST(MAX(created_at), MAX(updated_at)), 'YYYY-MM-DD HH24:MI:SS.US'), '1970-01-01 00:00:00.000000') FROM $table_name" | xargs)
         
         echo "Latest timestamp for $table_name: $latest_timestamp"
         
-        # Get the maximum timestamp from the source table
-        max_timestamp=$(ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
-        "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -t -c \\\"SELECT MAX(created_at) FROM $table_name\\\"\"" | xargs)
+        # Generate the column list for SET clause, preserving case
+        columns=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT string_agg('\"' || column_name || '\"', ', ') FROM information_schema.columns WHERE table_name = '$table_name' AND column_name != 'stream_id'")
         
-        current_timestamp=$latest_timestamp
-        total_rows_transferred=0
-        
-        while [[ "$current_timestamp" < "$max_timestamp" ]]; do
-          next_timestamp=$(date -d "$current_timestamp + 1 day" +"%Y-%m-%d %H:%M:%S")
-          
-          ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
-          "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -c \\\"COPY (SELECT * FROM $table_name WHERE created_at > '$current_timestamp' AND created_at <= '$next_timestamp') TO STDOUT\\\" | gzip -c\"" | \
-          gunzip | \
-          PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -v ON_ERROR_STOP=1 -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -c "COPY $table_name FROM STDIN"
-          
-          rows_transferred=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COUNT(*) FROM $table_name WHERE created_at > '$current_timestamp' AND created_at <= '$next_timestamp'")
-          total_rows_transferred=$((total_rows_transferred + rows_transferred))
-          echo "Transferred $rows_transferred rows for table $table_name (incremental, $current_timestamp to $next_timestamp)"
-          
-          current_timestamp=$next_timestamp
-        done
-        
-        echo "Total transferred $total_rows_transferred rows for table $table_name (incremental)"
+        # Generate a truncated temporary table name
+        temp_table_name="temp_${table_name:0:58}"  # 63 characters max, leaving room for "temp_"
+
+        # Find missing and updated rows
+        ssh -i ~/.ssh/id_hirenodes root@{{ hirenodes_pg_host }} \
+        "su - postgres -c \"PGPASSWORD='{{ hirenodes_pg_password }}' psql -h localhost -U {{ hirenodes_pg_user }} -d {{ hirenodes_pg_database }} -c \\\"
+          COPY (
+            SELECT s.* FROM $table_name s
+             LEFT JOIN dblink('host=localhost port=5433 user={{ ceramic_indexing_db_user }} password={{ ceramic_indexing_db_password }} dbname={{ ceramic_indexing_db_name }}',
+                             'SELECT stream_id, updated_at FROM $table_name') AS d(stream_id text, updated_at timestamp)
+            ON s.stream_id = d.stream_id
+            WHERE d.stream_id IS NULL OR s.updated_at > d.updated_at OR s.updated_at > '$latest_timestamp'::timestamp
+          ) TO STDOUT
+        \\\" | gzip -c\"" | \
+        gunzip | \
+        PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -v ON_ERROR_STOP=1 -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -c "
+          CREATE TEMP TABLE $temp_table_name (LIKE $table_name INCLUDING ALL);
+          COPY $temp_table_name FROM STDIN;
+          INSERT INTO $table_name
+          SELECT * FROM $temp_table_name
+          ON CONFLICT (stream_id) DO UPDATE
+          SET ($columns) = (SELECT $columns FROM $temp_table_name WHERE $temp_table_name.stream_id = $table_name.stream_id);
+          DROP TABLE $temp_table_name;
+        "
+
+        rows_transferred=$(PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }} -t -c "SELECT COUNT(*) FROM $table_name WHERE created_at > '$latest_timestamp'::timestamp OR updated_at > '$latest_timestamp'::timestamp")
+        echo "Transferred $rows_transferred rows for table $table_name (incremental)"
       fi
   args:
     executable: /bin/bash
@@ -108,7 +120,7 @@
 
 - name: Display summary of transferred rows
   ansible.builtin.debug:
-    msg: "{{ pg_data_migration_result.results | map(attribute='stdout_lines') | flatten | select('match', '^(Transferred|Total transferred|Latest timestamp)') | list }}"
+    msg: "{{ pg_data_migration_result.results | map(attribute='stdout_lines') | flatten | select('match', '^(Transferred|Latest timestamp)') | list }}"
   when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
 
 # Ceramic migration
