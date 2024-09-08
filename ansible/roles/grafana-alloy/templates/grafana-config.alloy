@@ -31,13 +31,23 @@ prometheus.scrape "default" {
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
 
-prometheus.scrape "ceramic" {
+{% if 'js-ceramic' in inventory_hostname %}
+prometheus.scrape "js_ceramic" {
   targets = [
-    {"__address__" = "127.0.0.1:9464"},
-    {"__address__" = "127.0.0.1:9465"},
+    {"job" = "js-ceramic", "__address__" = "127.0.0.1:9464"},
   ]
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
+{% endif %}
+
+{% if 'rust-ceramic' in inventory_hostname %}
+prometheus.scrape "rust_ceramic" {
+  targets = [
+      {"job" = "rust-ceramic", "__address__" = "127.0.0.1:9465"},
+  ]
+  forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
+}
+{% endif %}
 
 prometheus.remote_write "grafana_cloud_prometheus" {
 	// https://grafana.com/docs/agent/latest/flow/reference/components/prometheus.remote_write/
