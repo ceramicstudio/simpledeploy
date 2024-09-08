@@ -49,6 +49,15 @@ prometheus.scrape "rust_ceramic" {
 }
 {% endif %}
 
+{% if 'go-ipfs' in inventory_hostname %}
+prometheus.scrape "go_ipfs" {
+  targets = [
+      {"job" = "go-ipfs", "__address__" = "127.0.0.1:5001", "metrics_path" = "/debug/metrics/prometheus"},
+  ]
+  forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
+}
+{% endif %}
+
 prometheus.remote_write "grafana_cloud_prometheus" {
 	// https://grafana.com/docs/agent/latest/flow/reference/components/prometheus.remote_write/
 	endpoint {
