@@ -63,16 +63,8 @@ all:
     external_host_fqdn: "{{ external_hostname }}.{{ domain }}"
     internal_hostname: "{{ external_hostname }}-internal"
     internal_host_fqdn: "{{ internal_hostname }}.{{ domain }}"
-    # Hirenodes PG
-    hirenodes_pg_ssh_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-ssh-key') }}"
-    hirenodes_pg_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-host') }}"
-    hirenodes_pg_database: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-database') }}"
-    hirenodes_pg_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-user') }}"
-    hirenodes_pg_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-pg-password') }}"
-    # Hirenodes Ceramic
-    hirenodes_ceramic_ssh_key: ~/.ssh/id_hirenodes
+    # Hirenodes
+    hirenodes_ssh_key: ~/.ssh/id_hirenodes
     hirenodes_ceramic_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ceramic-host') }}"
     hirenodes_ceramic_store_path: /root/.ceramic
-    # Hirenodes IPFS
-    hirenodes_ipfs_ssh_key: ~/.ssh/id_hirenodes
     hirenodes_ipfs_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ipfs-host') }}"

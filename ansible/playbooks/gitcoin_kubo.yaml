@@ -57,18 +57,6 @@
       import_role:
         name: migration
       tags: migration
-    - name: go-ipfs
-      import_role:
-        name: go-ipfs
-      tags: go-ipfs
-    - name: js-ceramic
-      import_role:
-        name: js-ceramic
-      tags: js-ceramic
-    - name: caddy
-      import_role:
-        name: caddy
-      tags: caddy
     - name: healthcheck
       import_role:
         name: healthcheck
