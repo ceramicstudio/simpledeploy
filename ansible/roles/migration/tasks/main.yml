@@ -20,7 +20,7 @@
   delegate_to: gitcoin-js-ceramic-3.3boxlabs.com
   register: ceramic_migration_result
   when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
-  
+
 # IPFS migration
 - name: Get current timestamp
   ansible.builtin.set_fact:
@@ -34,21 +34,22 @@
     remote_src: yes
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
 
+- name: Get latest ZFS snapshot on hirenodes_ipfs
+  ansible.builtin.shell:
+    cmd: ssh -i {{ hirenodes_ceramic_ssh_key }} root@{{ hirenodes_ipfs_host }} "zfs list -H -t snapshot -o name ipfs/ipfs | sort | tail -n 1"
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+  register: remote_latest_snapshot
+  failed_when: remote_latest_snapshot.rc != 0
+  changed_when: false
+  become: yes
+
 - name: Stream ZFS snapshot from hirenodes_ipfs to gitcoin-go-ipfs-1
   ansible.builtin.shell:
-    cmd: zfs send -i ipfs/ipfs@initial {{ remote_latest_snapshot.stdout }}
-  delegate_to: hirenodes_ipfs
-  register: zfs_send_output
+    cmd: ssh -i {{ hirenodes_ceramic_ssh_key }} root@{{ hirenodes_ipfs_host }} "zfs send -i ipfs/ipfs@initial {{ remote_latest_snapshot.stdout }}" | zfs receive -F ipfspool/data-store
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
-
-- name: Apply ZFS snapshot on gitcoin-go-ipfs-1
-  ansible.builtin.shell:
-    cmd: zfs receive -F ipfspool/data-store
-  args:
-    stdin: "{{ zfs_send_output.stdout }}"
-  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
-  register: zfs_receive_result
-  failed_when: zfs_receive_result.rc != 0
+  register: zfs_stream_result
+  failed_when: zfs_stream_result.rc != 0
+  become: yes
 
 - name: Restore IPFS config file
   ansible.builtin.copy:

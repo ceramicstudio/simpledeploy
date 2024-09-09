@@ -74,5 +74,5 @@ all:
     hirenodes_ceramic_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ceramic-host') }}"
     hirenodes_ceramic_store_path: /root/.ceramic
     # Hirenodes IPFS
-    hirenodes_ipfs_ssh_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ipfs-ssh-key') }}"
+    hirenodes_ipfs_ssh_key: ~/.ssh/id_hirenodes
     hirenodes_ipfs_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ipfs-host') }}"

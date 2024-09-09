@@ -11,17 +11,6 @@
     state: stopped
   when: inventory_hostname == 'gitcoin-go-ipfs-2.3boxlabs.com'
 
-- name: Stream PG backup from remote Postgres node to GCP SQL DB
-  ansible.builtin.shell:
-    cmd: |
-      "PGPASSWORD='{{ ceramic_indexing_db_password }}' pg_dump -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d gitcoin-js-ceramic-3 --clean --if-exists" | \
-      PGPASSWORD='{{ ceramic_indexing_db_password }}' psql -h {{ ceramic_indexing_db_host }} -U {{ ceramic_indexing_db_user }} -d {{ ceramic_indexing_db_name }}
-  when: inventory_hostname == 'gitcoin-js-ceramic-4.3boxlabs.com'
-  delegate_to: localhost
-  register: pg_stream_result
-  failed_when: pg_stream_result.rc != 0
-  no_log: true  # This prevents the command (which includes passwords) from being logged
-
 - name: Get latest Ceramic snapshot on remote machine
   ansible.builtin.shell:
     cmd: ssh gitcoin-js-ceramic-3.3boxlabs.com -i ~/.ssh/google_compute_engine "zfs list -H -t snapshot -o name ceramiconepool/data-store | sort | tail -n 1"
