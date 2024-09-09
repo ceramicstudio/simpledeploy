@@ -16,7 +16,9 @@
 # Ceramic migration
 - name: Stream Ceramic statestore from hirenodes_ceramic to gitcoin-js-ceramic-3
   ansible.builtin.shell:
-    cmd: ssh -i {{ hirenodes_ssh_key }} root@{{ hirenodes_ceramic_host }} 'tar -C {{ hirenodes_ceramic_store_path }} -cvf - statestore' | tar -xvf - -C {{ data_store_mount_path }}
+    cmd: |
+      ssh -i {{ hirenodes_ssh_key }} root@{{ hirenodes_ceramic_host }} 'tar -C {{ hirenodes_ceramic_store_path }} -cvf - statestore' | tar -xvf - -C {{ data_store_mount_path }}
+      sudo chown -R ceramic:ceramic {{ data_store_mount_path }}/*
   delegate_to: gitcoin-js-ceramic-3.3boxlabs.com
   register: ceramic_migration_result
   when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
@@ -98,10 +100,10 @@
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
 
 # Start services
-- name: Start go-ipfs-1 node
-  ansible.builtin.systemd:
-    name: go-ipfs
-    state: started
+- name: Start go-ipfs Docker container
+  ansible.builtin.shell:
+    cmd: docker-compose up -d
+    chdir: /opt/go-ipfs
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
 
 - name: Start js-ceramic-3 node

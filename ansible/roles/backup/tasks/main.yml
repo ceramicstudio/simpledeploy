@@ -136,10 +136,10 @@
   when: inventory_hostname == 'gitcoin-go-ipfs-2.3boxlabs.com'
 
 # Start services
-- name: Start go-ipfs-2 node
-  ansible.builtin.systemd:
-    name: go-ipfs
-    state: started
+- name: Start go-ipfs Docker container
+  ansible.builtin.shell:
+    cmd: docker-compose up -d
+    chdir: /opt/go-ipfs
   when: inventory_hostname == 'gitcoin-go-ipfs-2.3boxlabs.com'
 
 - name: Start js-ceramic-4 node

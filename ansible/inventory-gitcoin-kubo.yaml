@@ -51,7 +51,9 @@ all:
     ceramic_indexing_db_name: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-name') }}"
     ceramic_indexing_db_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-user') }}"
     ceramic_indexing_db_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-password') }}"
-    ceramic_indexing_db_string: "postgresql://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ external_hostname }}"
+    ceramic_indexing_db_string: "postgresql://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ ceramic_indexing_db_name }}"
+    ceramic_eth_rpc_url: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-mainnet-eth-rpc-url') }}"
+    ceramic_cas_api_url: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-cas-api-url') }}"
     ceramic_versions_path: /tmp
     composedb_cli_version: latest
     domain: "{{ inventory_hostname.split('.')[-2:] | join('.') }}"
