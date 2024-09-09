@@ -27,6 +27,13 @@
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
 
+- name: Backup IPFS env file
+  ansible.builtin.copy:
+    src: "{{ data_store_mount_path }}/go-ipfs.env"
+    dest: "~/go-ipfs.env"
+    remote_src: yes
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
 - name: Backup IPFS config file with timestamp
   ansible.builtin.copy:
     src: "{{ data_store_mount_path }}/ipfs-data/config"
@@ -37,8 +44,8 @@
 - name: Get latest common snapshot between hirenodes_ipfs and gitcoin-go-ipfs-1
   ansible.builtin.shell:
     cmd: |
-      local_snapshots=$(zfs list -H -t snapshot -o name ipfspool/data-store | sort)
-      remote_snapshots=$(ssh -i {{ hirenodes_ssh_key }} root@{{ hirenodes_ipfs_host }} "zfs list -H -t snapshot -o name ipfs/ipfs | sort")
+      local_snapshots=$(zfs list -H -t snapshot -o name ipfspool/data-store)
+      remote_snapshots=$(ssh -i {{ hirenodes_ssh_key }} root@{{ hirenodes_ipfs_host }} "zfs list -H -t snapshot -o name ipfs/ipfs")
       echo "$local_snapshots" | grep -Fx "$(echo "$remote_snapshots" | sed 's/ipfs\/ipfs@/ipfspool\/data-store@/')" | tail -n 1
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
   register: common_snapshot
@@ -69,17 +76,24 @@
   failed_when: zfs_stream_result.rc != 0
   become: yes
 
+- name: Restore IPFS env file
+  ansible.builtin.copy:
+    src: "~/go-ipfs.env"
+    dest: "{{ data_store_mount_path }}/go-ipfs.env"
+    remote_src: yes
+  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
+
 - name: Restore IPFS config file
   ansible.builtin.copy:
-    src: "/home/{{ ansible_user }}/ipfs_config_backup_{{ timestamp }}"
+    src: "~/ipfs_config_backup_{{ timestamp }}"
     dest: "{{ data_store_mount_path }}/ipfs-data/config"
     remote_src: yes
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
 
 - name: Create symlink to latest config backup
   ansible.builtin.file:
-    src: "/home/{{ ansible_user }}/ipfs_config_backup_{{ timestamp }}"
-    dest: "/home/{{ ansible_user }}/ipfs_config_backup_latest"
+    src: "~/ipfs_config_backup_{{ timestamp }}"
+    dest: "~/ipfs_config_backup_latest"
     state: link
   when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'
 

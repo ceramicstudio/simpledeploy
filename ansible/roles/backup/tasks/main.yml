@@ -29,8 +29,8 @@
 - name: Get latest common snapshot between gitcoin-js-ceramic-3 and gitcoin-js-ceramic-4
   ansible.builtin.shell:
     cmd: |
-      local_snapshots=$(zfs list -H -t snapshot -o name ceramiconepool/data-store | sort)
-      remote_snapshots=$(gcloud compute ssh gitcoin-js-ceramic-3 --zone "us-central1-a" --command="zfs list -H -t snapshot -o name ceramiconepool/data-store | sort")
+      local_snapshots=$(zfs list -H -t snapshot -o name ceramiconepool/data-store)
+      remote_snapshots=$(gcloud compute ssh gitcoin-js-ceramic-3 --zone "us-central1-a" --command="zfs list -H -t snapshot -o name ceramiconepool/data-store")
       echo "$local_snapshots" | grep -Fx "$remote_snapshots" | tail -n 1
   when: inventory_hostname == 'gitcoin-js-ceramic-4.3boxlabs.com'
   register: ceramic_common_snapshot
@@ -90,8 +90,8 @@
 - name: Get latest common snapshot between gitcoin-go-ipfs-1 and gitcoin-go-ipfs-2
   ansible.builtin.shell:
     cmd: |
-      local_snapshots=$(zfs list -H -t snapshot -o name ipfspool/data-store | sort)
-      remote_snapshots=$(gcloud compute ssh gitcoin-go-ipfs-1 --zone "us-central1-a" --command="zfs list -H -t snapshot -o name ipfspool/data-store | sort")
+      local_snapshots=$(zfs list -H -t snapshot -o name ipfspool/data-store)
+      remote_snapshots=$(gcloud compute ssh gitcoin-go-ipfs-1 --zone "us-central1-a" --command="zfs list -H -t snapshot -o name ipfspool/data-store")
       echo "$local_snapshots" | grep -Fx "$remote_snapshots" | tail -n 1
   when: inventory_hostname == 'gitcoin-go-ipfs-2.3boxlabs.com'
   register: common_snapshot

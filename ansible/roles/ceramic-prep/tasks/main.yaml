@@ -7,7 +7,6 @@
     - jq
     - unzip
     - acl
-    - rsync
     - postgresql-client
 
 - name: create user
