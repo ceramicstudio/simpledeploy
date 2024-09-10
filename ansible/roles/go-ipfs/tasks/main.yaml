@@ -25,6 +25,12 @@
     dest: "{{ data_store_mount_path }}/go-ipfs.env"
   register: go_ipfs_env
 
+- name: Template config file
+  ansible.builtin.template:
+    src: "go-ipfs-config.json.j2"
+    dest: "{{ data_store_mount_path }}/ipfs-data/config"
+  register: go_ipfs_config
+
 - name: Check if go-ipfs container is running
   ansible.builtin.shell:
     cmd: docker ps --filter "name=go-ipfs" --format '{% raw %}{{.Names}}{% endraw %}'
@@ -44,14 +50,14 @@
       ansible.builtin.shell:
         cmd: docker-compose stop go-ipfs
         chdir: /opt/go-ipfs
-      
+
     - name: Remove go-ipfs container
       ansible.builtin.shell:
         cmd: docker-compose rm -f go-ipfs
         chdir: /opt/go-ipfs
-      
+
     - name: Start go-ipfs container
       ansible.builtin.shell:
         cmd: docker-compose up -d go-ipfs
         chdir: /opt/go-ipfs
-  when: docker_compose_file.changed or go_ipfs_env.changed
+  when: docker_compose_file.changed or go_ipfs_env.changed or go_ipfs_config.changed
