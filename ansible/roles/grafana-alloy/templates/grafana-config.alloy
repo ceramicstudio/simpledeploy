@@ -51,8 +51,9 @@ prometheus.scrape "rust_ceramic" {
 
 {% if 'go-ipfs' in inventory_hostname %}
 prometheus.scrape "go_ipfs" {
+  metrics_path = "/debug/metrics/prometheus"
   targets = [
-      {"job" = "go-ipfs", "__address__" = "127.0.0.1:5001", "metrics_path" = "/debug/metrics/prometheus"},
+      {"job" = "go-ipfs", "__address__" = "127.0.0.1:5101"},
   ]
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
