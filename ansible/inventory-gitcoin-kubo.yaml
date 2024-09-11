@@ -26,13 +26,11 @@ all:
     go_ipfs:
       hosts:
         gitcoin-go-ipfs-1.3boxlabs.com:
-          vars:
-            go_ipfs_private_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-1-private-key') }}"
-            go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-1-peer-id') }}"
+          go_ipfs_private_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-1-private-key') }}"
+          go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-1-peer-id') }}"
         gitcoin-go-ipfs-2.3boxlabs.com:
-          vars:
-            go_ipfs_private_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-private-key') }}"
-            go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-peer-id') }}"
+          go_ipfs_private_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-private-key') }}"
+          go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-peer-id') }}"
       vars:
         data_store_mount_path: /go_ipfs_datastore
         image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
@@ -71,6 +69,7 @@ all:
     external_host_fqdn: "{{ external_hostname }}.{{ domain }}"
     internal_hostname: "{{ external_hostname }}-internal"
     internal_host_fqdn: "{{ internal_hostname }}.{{ domain }}"
+    gitcoin_js_ceramic_hostname: "gitcoin-js-ceramic.{{ domain }}"
     # Hirenodes
     hirenodes_ssh_key: ~/.ssh/id_hirenodes
     hirenodes_ceramic_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ceramic-host') }}"

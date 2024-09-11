@@ -1,5 +1,7 @@
 ---
-- hosts: all
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
   become: true
   roles:
     - name: ceramic-prep
@@ -15,7 +17,8 @@
         name: grafana-alloy
       tags: grafana-alloy
 
-- hosts: go_ipfs
+- hosts:
+    - gitcoin-go-ipfs-1.3boxlabs.com
   become: true
   roles:
     - name: docker
@@ -27,7 +30,8 @@
         name: go-ipfs
       tags: go-ipfs
 
-- hosts: js_ceramic
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
   become: true
   roles:
     - name: js-ceramic
@@ -39,7 +43,9 @@
         name: caddy
       tags: caddy
 
-- hosts: all
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
   become: true
   roles:
     - name: healthcheck
