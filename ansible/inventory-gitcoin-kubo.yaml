@@ -11,7 +11,6 @@ all:
           ipfs_host: "{{ hostvars[groups['go_ipfs'][1]]['internal_host_fqdn'] }}:{{ api_port }}"
           ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-backup-db-host') }}"
       vars:
-        ceramic_node_version: v20.12.2
         data_store_mount_path: /js_ceramic_datastore
         healthcheck_path: /api/v0/node/healthcheck
         healthcheck_port: 7007
@@ -33,7 +32,6 @@ all:
           go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-peer-id') }}"
       vars:
         data_store_mount_path: /go_ipfs_datastore
-        image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
         healthcheck_path: /healthcheck
         healthcheck_port: 8011
         metrics_port: "{{ api_port }}"
@@ -59,7 +57,9 @@ all:
     ceramic_eth_rpc_url: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-mainnet-eth-rpc-url') }}"
     ceramic_cas_api_url: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-cas-api-url') }}"
     ceramic_versions_path: /tmp
+    ceramic_node_version: v20.12.2
     composedb_cli_version: latest
+    go_ipfs_image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
     domain: "{{ inventory_hostname.split('.')[-2:] | join('.') }}"
     grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
     grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"

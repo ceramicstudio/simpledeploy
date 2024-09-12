@@ -6,7 +6,7 @@
     state: stopped
   when: inventory_hostname == 'gitcoin-js-ceramic-3.3boxlabs.com'
 
-- name: Stop go-ipfs Docker container
+- name: Stop go-ipfs-1 node
   ansible.builtin.shell:
     cmd: docker-compose down
     chdir: /opt/go-ipfs
@@ -63,10 +63,3 @@
   register: zfs_stream_result
   failed_when: zfs_stream_result.rc != 0
   become: yes
-
-- name: Create symlink to latest config backup
-  ansible.builtin.file:
-    src: "~/ipfs_config_backup_{{ timestamp }}"
-    dest: "~/ipfs_config_backup_latest"
-    state: link
-  when: inventory_hostname == 'gitcoin-go-ipfs-1.3boxlabs.com'

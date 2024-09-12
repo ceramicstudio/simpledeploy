@@ -57,7 +57,7 @@
     - gitcoin-js-ceramic-3.3boxlabs.com
     - gitcoin-go-ipfs-1.3boxlabs.com
   become: true
-  tags: ipfs-migration
+  tags: migration
   roles:
     - name: migration
       import_role:
