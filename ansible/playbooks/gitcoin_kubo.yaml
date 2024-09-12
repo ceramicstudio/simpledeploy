@@ -57,16 +57,29 @@
     - gitcoin-js-ceramic-3.3boxlabs.com
     - gitcoin-go-ipfs-1.3boxlabs.com
   become: true
-  tags: migration
   roles:
     - name: migration
       import_role:
         name: migration
       tags: migration
+
+- hosts:
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: docker
+      import_role:
+        name: docker
+      tags: docker
     - name: go-ipfs
       import_role:
         name: go-ipfs
       tags: go-ipfs
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+  become: true
+  roles:
     - name: js-ceramic
       import_role:
         name: js-ceramic
@@ -75,6 +88,12 @@
       import_role:
         name: caddy
       tags: caddy
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
     - name: healthcheck
       import_role:
         name: healthcheck

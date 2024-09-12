@@ -17,6 +17,7 @@
 - name: Stream Ceramic statestore from hirenodes_ceramic to gitcoin-js-ceramic-3
   ansible.builtin.shell:
     cmd: |
+      sudo rm -rf {{ data_store_mount_path }}/statestore
       ssh -i {{ hirenodes_ssh_key }} root@{{ hirenodes_ceramic_host }} 'tar -C {{ hirenodes_ceramic_store_path }} -cvf - statestore' | tar -xvf - -C {{ data_store_mount_path }}
       sudo chown -R ceramic:ceramic {{ data_store_mount_path }}/*
   delegate_to: gitcoin-js-ceramic-3.3boxlabs.com
