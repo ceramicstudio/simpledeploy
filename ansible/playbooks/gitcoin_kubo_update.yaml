@@ -1,0 +1,22 @@
+---
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+  become: true
+  roles:
+    - name: js-ceramic
+      import_role:
+        name: js-ceramic
+      tags: js-ceramic
+    - name: caddy
+      import_role:
+        name: caddy
+      tags: caddy
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+  become: true
+  roles:
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck
