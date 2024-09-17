@@ -16,11 +16,22 @@ Requires
   - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
   - [docker](https://docs.docker.com/get-docker/)
 
+To use ceramic prior to version 6:
 ```
 kind create cluster --name ceramic
 kubectl create ns ceramic
 ./k8s/base/composedb/create-secrets.sh
 kubectl apply -k k8s/base/composedb/
+```
+
+To use ceramic version 6.x or above (using ceramic-one):
+```
+kind create cluster --name ceramic
+cd ./k8s/base/ceramic-one
+export CERAMIC_NAMESPACE=ceramic-one-0-17-0
+kubectl create namespace ${CERAMIC_NAMESPACE}
+./scripts/create-secrets.sh
+kubectl apply -k .
 ```
 
 View logs
