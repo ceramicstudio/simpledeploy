@@ -33,6 +33,8 @@ kubectl create namespace ${CERAMIC_NAMESPACE}
 ./scripts/create-secrets.sh
 kubectl apply -k .
 ```
+See [https://developers.ceramic.network/docs/composedb/guides/composedb-server/running-in-the-cloud](https://developers.ceramic.network/docs/composedb/guides/composedb-server/running-in-the-cloud) for more detailed instructions.
+
 
 View logs
 ```
