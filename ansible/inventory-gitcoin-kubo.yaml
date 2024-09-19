@@ -14,7 +14,7 @@ all:
         data_store_mount_path: /js_ceramic_datastore
         healthcheck_path: /api/v0/node/healthcheck
         healthcheck_port: 7007
-        js_ceramic_version: 6.4.0
+        js_ceramic_version: 6.5.0-rc.0
         metrics_path: /metrics
         metrics_port: 9464
         zfs_pools:
