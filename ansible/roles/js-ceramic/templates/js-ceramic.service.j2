@@ -9,6 +9,8 @@ ExecStart=/home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/bin/node /
 Environment=CERAMIC_ENABLE_EXPERIMENTAL_SYNC=true
 Environment=CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB=true
 Environment=CERAMIC_RECON_MODE=true
+Environment=NODE_OPTIONS=--max-old-space-size=31744
+Environment=NODE_ENV=production
 
 Restart=always
 RestartSec=1
