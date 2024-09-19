@@ -35,15 +35,22 @@
   become_flags: --login
   become_user: ceramic
   block:
+    - name: Check installed Ceramic version
+      ansible.builtin.shell: |
+        source ~/.nvm/nvm.sh && ceramic -v
+      args:
+        executable: /bin/bash
+      register: installed_ceramic_version
+      changed_when: false
+
     - name: Install ceramic
       ansible.builtin.shell: |
         source ~/.nvm/nvm.sh && npm install -g @composedb/cli@{{composedb_cli_version}} @ceramicnetwork/cli@{{js_ceramic_version}}
       args:
         executable: /bin/bash
         chdir: "$HOME"
-        creates: "$HOME/.nvm/versions/node/{{item}}/bin/ceramic"
-      loop:
-        - "{{ceramic_node_version}}"
+        creates: "$HOME/.nvm/versions/node/{{ceramic_node_version}}/lib/node_modules/@ceramicnetwork/cli/package.json"
+      when: installed_ceramic_version.stdout != js_ceramic_version
       register: install_ceramic_version
 
     - name: Template ceramic daemon.config
