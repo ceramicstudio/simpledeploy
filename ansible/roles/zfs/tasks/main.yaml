@@ -26,13 +26,19 @@
   ignore_errors: no
   changed_when: false
 
+- name: Import ZFS pools if they exist
+  command: zpool import {{ item.name }}
+  loop: "{{ zfs_pools }}"
+  ignore_errors: yes
+  changed_when: false
+  when: zfs_module.rc == 0
+
 - name: Check if ZFS pools exist
   command: zpool list {{ item.name }}
   loop: "{{ zfs_pools }}"
   register: zpool_exists
   ignore_errors: yes
   changed_when: false
-  when: zfs_module.rc == 0
 
 - name: Create ZFS pools
   command: zpool create {{ item.item.name }} {{ item.item.devices | join(' ') }}
