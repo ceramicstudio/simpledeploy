@@ -7,6 +7,7 @@
     - jq
     - unzip
     - acl
+    - postgresql-client
 
 - name: create user
   ansible.builtin.user:
@@ -17,40 +18,40 @@
 
 - name: Format and mount js-ceramic block device
   block:
-    - name: Create persistant data location
+    - name: Create persistent data location
       community.general.filesystem:
         fstype: ext4
         dev: "{{ js_ceramic_data_block_path }}"
 
-    - name: Mount persistant data location
+    - name: Mount persistent data location
       ansible.posix.mount:
-        path: "{{ js_ceramic_data_mount_path }}"
-        src: "{{ js_ceramic_data_block_path }}"
+        path: "{{ data_store_mount_path }}"
+        src: "{{ data_store_mount_path }}"
         fstype: ext4
         state: mounted
 
     - name: Change ceramic disk owner to ceramic
       ansible.builtin.file:
-        path: "{{ js_ceramic_data_mount_path }}"
+        path: "{{ data_store_mount_path }}"
         state: directory
         owner: ceramic
 
     - name: Create js_ceramic_data for persistent data storage
       ansible.builtin.file:
-        path: "{{ js_ceramic_data_mount_path }}/js_ceramic_data/"
+        path: "{{ data_store_mount_path }}/"
         state: directory
         owner: ceramic
 
   when: js_ceramic_data_block_path is defined
 
-- name: Format and mount rust-cermaic block device
+- name: Format and mount rust-ceramic block device
   block:
-    - name: Create persistant data location
+    - name: Create persistent data location
       community.general.filesystem:
         fstype: ext4
         dev: "{{ rust_ceramic_data_block_path }}"
 
-    - name: Mount persistant data location
+    - name: Mount persistent data location
       ansible.posix.mount:
         path: "{{ rust_ceramic_data_mount_path }}"
         src: "{{ rust_ceramic_data_block_path }}"

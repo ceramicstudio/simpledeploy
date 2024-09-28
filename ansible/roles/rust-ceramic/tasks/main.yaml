@@ -8,7 +8,7 @@
 
 - name: Create the rust-ceramic store directory if it doesn't exist
   ansible.builtin.file:
-    path: "{{ rust_ceramic_store_path }}"
+    path: "{{ data_store_mount_path }}"
     state: directory
     mode: '0755'
     owner: ceramic
@@ -38,7 +38,7 @@
     - name: "Template rust-ceramic env"
       ansible.builtin.template:
         src: "rust-ceramic.env.j2"
-        dest: "{{ rust_ceramic_data_mount_path }}/rust-ceramic.env"
+        dest: "{{ data_store_mount_path }}/rust-ceramic.env"
       register: rust_ceramic_env
     - name: "Template ceramic systemd unit"
       ansible.builtin.template:
