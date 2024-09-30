@@ -33,6 +33,15 @@
     - gitcoin-js-ceramic-3.3boxlabs.com
   become: true
   roles:
+    - name: datadog
+      import_role:
+        name: datadog
+      tags: datadog
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+  become: true
+  roles:
     - name: healthcheck
       import_role:
         name: healthcheck

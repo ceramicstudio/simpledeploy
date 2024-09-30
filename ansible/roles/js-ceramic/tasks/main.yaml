@@ -81,4 +81,4 @@
     state: "restarted"
     enabled: true
     daemon_reload: true
-  when: ceramic_daemon_config.changed
+  when: ceramic_daemon_config.changed or ceramic_systemd_unit.changed

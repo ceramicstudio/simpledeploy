@@ -1,0 +1,17 @@
+- name: Install the Datadog Agent
+  import_role:
+    name: datadog.dd.agent
+  vars:
+    datadog_api_key: "{{ data_dog_api_key }}"
+    datadog_site: "{{ data_dog_site }}"
+
+- name: Install the Datadog Package
+  become: yes
+  become_flags: --login
+  become_user: ceramic
+  ansible.builtin.shell:
+    cmd: |
+      source ~/.nvm/nvm.sh && npm install -g dd-trace
+  args:
+    executable: /bin/bash
+  changed_when: false
