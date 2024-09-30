@@ -4,6 +4,9 @@
   vars:
     datadog_api_key: "{{ data_dog_api_key }}"
     datadog_site: "{{ data_dog_site }}"
+    datadog_config:
+      tags:
+        - host: "{{ inventory_hostname }}"
 
 - name: Install the Datadog Package
   become: yes
