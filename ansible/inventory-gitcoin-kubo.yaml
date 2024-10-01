@@ -6,10 +6,12 @@ all:
           ceramic_node_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-3-private-key') }}"
           ipfs_host: "{{ hostvars[groups['go_ipfs'][0]]['internal_host_fqdn'] }}:{{ api_port }}"
           ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-host') }}"
+          datadog_enabled: true
         gitcoin-js-ceramic-4.3boxlabs.com:
           ceramic_node_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-4-private-key') }}"
           ipfs_host: "{{ hostvars[groups['go_ipfs'][1]]['internal_host_fqdn'] }}:{{ api_port }}"
           ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-backup-db-host') }}"
+          datadog_enabled: false
       vars:
         data_store_mount_path: /js_ceramic_datastore
         healthcheck_path: /api/v0/node/healthcheck

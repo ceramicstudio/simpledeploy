@@ -6,13 +6,10 @@ After=network-online.target
 Type=simple
 User=ceramic
 ExecStart=/home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/bin/node --require /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/dd-trace/init /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/@ceramicnetwork/cli/bin/ceramic.js daemon --debug --config {{ data_store_mount_path }}/daemon.config.json
-Environment=CERAMIC_ENABLE_EXPERIMENTAL_SYNC=true
-Environment=CERAMIC_ENABLE_EXPERIMENTAL_COMPOSE_DB=true
-Environment=CERAMIC_RECON_MODE=true
-Environment=DD_APM_ENABLED=true
+Environment=DD_APM_ENABLED={{ datadog_enabled }}
 Environment=DD_SERVICE=js-ceramic
-Environment=DD_PROFILING_ENABLED=true
-Environment=DD_TRACE_ENABLED=true
+Environment=DD_PROFILING_ENABLED={{ datadog_enabled }}
+Environment=DD_TRACE_ENABLED={{ datadog_enabled }}
 Environment=DD_ENV=gitcoin
 Environment=NODE_OPTIONS=--max-old-space-size=24576
 Environment=NODE_ENV=production
