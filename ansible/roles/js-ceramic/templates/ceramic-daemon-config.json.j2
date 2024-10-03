@@ -1,6 +1,8 @@
 {
   "anchor": {
-    "auth-method": "did"
+    "anchor-service-url": "{{ ceramic_cas_api_url }}",
+    "auth-method": "did",
+    "ethereum-rpc-url": "{{ ceramic_eth_rpc_url }}"
   },
   "http-api": {
     "cors-allowed-origins": [
@@ -14,7 +16,7 @@
   },
   "ipfs": {
     "mode": "remote",
-    "host": "http://{{ ipfs_host }}:5001",
+    "host": "http://{{ ipfs_host }}",
     "disable-peer-data-sync": false
   },
   "logger": {
@@ -23,7 +25,7 @@
   },
   "metrics": {
     "prometheus-exporter-enabled": true,
-    "prometheus-exporter-port": 9464
+    "prometheus-exporter-port": {{ metrics_port }}
   },
   "network": {
     "name": "{{ ceramic_network }}"
@@ -33,10 +35,10 @@
   },
   "state-store": {
     "mode": "fs",
-    "local-directory": "{{ js_ceramic_data_mount_path }}/ceramic_data/statestore/"
+    "local-directory": "{{ data_store_mount_path }}/statestore/"
   },
   "indexing": {
-    "db": "{{ js_ceramic_db_string }}",
+    "db": "{{ ceramic_indexing_db_string }}",
     "allow-queries-before-historical-sync": true
-    }
   }
+}

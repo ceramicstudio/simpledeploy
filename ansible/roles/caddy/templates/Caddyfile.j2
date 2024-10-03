@@ -2,3 +2,10 @@
     reverse_proxy localhost:7007
     tls infra@3box.io
 }
+
+{% if gitcoin_js_ceramic_hostname is defined and gitcoin_js_ceramic_hostname and 'js-ceramic' in gitcoin_js_ceramic_hostname %}
+{{ gitcoin_js_ceramic_hostname }} {
+    reverse_proxy localhost:7007
+    tls infra@3box.io
+}
+{% endif %}

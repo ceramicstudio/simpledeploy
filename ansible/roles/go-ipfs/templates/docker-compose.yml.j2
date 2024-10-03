@@ -1,0 +1,21 @@
+version: '3'
+services:
+  go-ipfs:
+    image: {{ go_ipfs_image }}
+    container_name: go-ipfs
+    restart: always
+    ports:
+      - "{{ swarm_port }}:{{ swarm_port }}"
+      - "{{ api_port }}:{{ api_port }}"
+      - "{{ healthcheck_port }}:{{ healthcheck_port }}"
+    volumes:
+      # The "ipfs-data" at the end is for compatibility with the HireNodes ZFS volume configuration
+      - {{ data_store_mount_path }}/ipfs-data:/data/ipfs
+    env_file:
+      - {{ data_store_mount_path }}/go-ipfs.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:{{ healthcheck_port }}/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

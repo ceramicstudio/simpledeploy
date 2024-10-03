@@ -1,0 +1,78 @@
+all:
+  children:
+    js_ceramic:
+      hosts:
+        gitcoin-js-ceramic-1.3boxlabs.com:
+          ceramic_node_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-1-private-key') }}"
+          ipfs_host: "{{ hostvars[groups['rust_ceramic'][0]]['internal_host_fqdn'] }}:{{ api_port }}"
+        gitcoin-js-ceramic-2.3boxlabs.com:
+          ceramic_node_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-2-private-key') }}"
+          ipfs_host: "{{ hostvars[groups['rust_ceramic'][1]]['internal_host_fqdn'] }}:{{ api_port }}"
+      vars:
+        ceramic_node_version: v20.12.2
+        data_store_mount_path: /js_ceramic_datastore
+        healthcheck_path: /api/v0/node/healthcheck
+        healthcheck_port: 7007
+        js_ceramic_version: 6.5.0-rc.0
+        metrics_path: /metrics
+        metrics_port: 9464
+        zfs_pools:
+          - name: ceramiconepool
+            devices:
+              - /dev/disk/by-id/google-js-ceramic-data
+            mount_path: /js_ceramic_datastore
+    rust_ceramic:
+      hosts:
+        gitcoin-rust-ceramic-1.3boxlabs.com:
+          peers:
+            - "/dns4/gitcoin-rust-ceramic-2.3boxlabs.com/tcp/{{ swarm_port }}/p2p/12D3KooWFYcuMUU4bMrCp5hp8oG4DgxKqRosN82xpgL2VB2xrTva"
+          zfs_pools:
+            - name: ceramiconepool
+              devices:
+                - /dev/disk/by-id/google-rust-ceramic-data
+              mount_path: /rust_ceramic_datastore
+            - name: migrationpool
+              devices:
+                - /dev/disk/by-id/google-migration-staging
+              mount_path: /migration_datastore
+        gitcoin-rust-ceramic-2.3boxlabs.com:
+          peers:
+            - "/dns4/gitcoin-rust-ceramic-1.3boxlabs.com/tcp/{{ swarm_port }}/p2p/12D3KooWHSogFBTJKFH2vabKrpYVhxzPSrijy1CzT29i2wWdRFcK"
+          zfs_pools:
+            - name: ceramiconepool
+              devices:
+                - /dev/disk/by-id/google-rust-ceramic-data
+              mount_path: /rust_ceramic_datastore
+      vars:
+        data_store_mount_path: /ceramic_one_datastore
+        healthcheck_path: /ceramic/liveness
+        healthcheck_port: "{{ api_port }}"
+        metrics_path: /metrics
+        metrics_port: 9464
+        rust_ceramic_version: v0.36.0
+        rust_ceramic_download_url: "https://github.com/ceramicnetwork/rust-ceramic/releases/download/{{ rust_ceramic_version }}/ceramic-one_x86_64-unknown-linux-gnu.tar.gz"
+
+  vars:
+    admin_dids:
+      - did:key:z6MkpceokHtmVRx2rm3gLwC2pNEyRsLFwi3bZesjvnCirEcb
+      - did:key:z6MkpUfCbACwkjmHBNPMcCMebeiLgPnUD65gNCVs3jhARntp
+    api_port: 5101
+    swarm_port: 4101
+    ceramic_network: mainnet
+    ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-host') }}"
+    ceramic_indexing_db_name: "{{ external_hostname }}"
+    ceramic_indexing_db_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-password') }}"
+    ceramic_indexing_db_port: 5432
+    ceramic_indexing_db_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-postgres-db-user') }}"
+    ceramic_indexing_db_string: "postgresql://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ external_hostname }}"
+    ceramic_versions_path: /tmp
+    composedb_cli_version: latest
+    domain: "{{ inventory_hostname.split('.')[-2:] | join('.') }}"
+    grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
+    grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"
+    grafana_prom_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-username') }}"
+    grafana_prom_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-password') }}"
+    external_hostname: "{{ inventory_hostname.split('.')[0] }}"
+    external_host_fqdn: "{{ external_hostname }}.{{ domain }}"
+    internal_hostname: "{{ external_hostname }}-internal"
+    internal_host_fqdn: "{{ internal_hostname }}.{{ domain }}"

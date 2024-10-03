@@ -1,0 +1,77 @@
+all:
+  children:
+    js_ceramic:
+      hosts:
+        gitcoin-js-ceramic-3.3boxlabs.com:
+          ceramic_node_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-3-private-key') }}"
+          ipfs_host: "{{ hostvars[groups['go_ipfs'][0]]['internal_host_fqdn'] }}:{{ api_port }}"
+          ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-host') }}"
+        gitcoin-js-ceramic-4.3boxlabs.com:
+          ceramic_node_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-js-ceramic-4-private-key') }}"
+          ipfs_host: "{{ hostvars[groups['go_ipfs'][1]]['internal_host_fqdn'] }}:{{ api_port }}"
+          ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-backup-db-host') }}"
+      vars:
+        data_store_mount_path: /js_ceramic_datastore
+        healthcheck_path: /api/v0/node/healthcheck
+        healthcheck_port: 7007
+        js_ceramic_version: 6.5.0-rc.0
+        metrics_path: /metrics
+        metrics_port: 9464
+        zfs_pools:
+          - name: ceramiconepool
+            devices:
+              - /dev/disk/by-id/google-js-ceramic-data
+            mount_path: /js_ceramic_datastore
+    go_ipfs:
+      hosts:
+        gitcoin-go-ipfs-1.3boxlabs.com:
+          go_ipfs_private_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-1-private-key') }}"
+          go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-1-peer-id') }}"
+        gitcoin-go-ipfs-2.3boxlabs.com:
+          go_ipfs_private_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-private-key') }}"
+          go_ipfs_peer_id: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-go-ipfs-2-peer-id') }}"
+      vars:
+        data_store_mount_path: /go_ipfs_datastore
+        healthcheck_path: /healthcheck
+        healthcheck_port: 8011
+        metrics_port: "{{ api_port }}"
+        metrics_path: /debug/metrics/prometheus
+        zfs_pools:
+          - name: ipfspool
+            devices:
+              - /dev/disk/by-id/google-go-ipfs-data
+            mount_path: /go_ipfs_datastore
+
+  vars:
+    admin_dids:
+      - did:key:z6MkgCCLpMLZJmwicT33owyWBhRpP3tPSWCsvMHLyNWDCJuE
+      - did:key:z6MkmpnA3pj5RkLbjDbgyDZfZCUy8wh7NmG56KA6vdSwYBRe
+    api_port: 5101
+    swarm_port: 4101
+    ceramic_network: mainnet
+    ceramic_indexing_db_port: 5432
+    ceramic_indexing_db_name: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-name') }}"
+    ceramic_indexing_db_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-user') }}"
+    ceramic_indexing_db_password: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-replica-db-password') }}"
+    ceramic_indexing_db_string: "postgresql://{{ ceramic_indexing_db_user }}:{{ ceramic_indexing_db_password }}@{{ ceramic_indexing_db_host }}:{{ ceramic_indexing_db_port }}/{{ ceramic_indexing_db_name }}"
+    ceramic_eth_rpc_url: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-mainnet-eth-rpc-url') }}"
+    ceramic_cas_api_url: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-cas-api-url') }}"
+    ceramic_versions_path: /tmp
+    ceramic_node_version: v20.12.2
+    composedb_cli_version: latest
+    go_ipfs_image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
+    domain: "{{ inventory_hostname.split('.')[-2:] | join('.') }}"
+    grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
+    grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"
+    grafana_prom_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-username') }}"
+    grafana_prom_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-password') }}"
+    external_hostname: "{{ inventory_hostname.split('.')[0] }}"
+    external_host_fqdn: "{{ external_hostname }}.{{ domain }}"
+    internal_hostname: "{{ external_hostname }}-internal"
+    internal_host_fqdn: "{{ internal_hostname }}.{{ domain }}"
+    gitcoin_js_ceramic_hostname: "gitcoin-js-ceramic.{{ domain }}"
+    # Hirenodes
+    hirenodes_ssh_key: ~/.ssh/id_hirenodes
+    hirenodes_ceramic_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ceramic-host') }}"
+    hirenodes_ceramic_store_path: /root/.ceramic
+    hirenodes_ipfs_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'hirenodes-ipfs-host') }}"

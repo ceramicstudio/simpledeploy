@@ -1,0 +1,63 @@
+---
+- name: Create the IPFS data directory
+  ansible.builtin.file:
+    path: "{{ data_store_mount_path }}"
+    state: directory
+    mode: '0755'
+    owner: ceramic
+    group: ceramic
+
+- name: Create Docker Compose directory
+  ansible.builtin.file:
+    path: "/opt/go-ipfs"
+    state: directory
+    mode: '0755'
+
+- name: Template Docker Compose file
+  ansible.builtin.template:
+    src: "docker-compose.yml.j2"
+    dest: "/opt/go-ipfs/docker-compose.yml"
+  register: docker_compose_file
+
+- name: Template environment file
+  ansible.builtin.template:
+    src: "go-ipfs.env.j2"
+    dest: "{{ data_store_mount_path }}/go-ipfs.env"
+  register: go_ipfs_env
+
+- name: Template config file
+  ansible.builtin.template:
+    src: "go-ipfs-config.json.j2"
+    dest: "{{ data_store_mount_path }}/ipfs-data/config"
+  register: go_ipfs_config
+
+- name: Check if go-ipfs container is running
+  ansible.builtin.shell:
+    cmd: docker ps --filter "name=go-ipfs" --format '{% raw %}{{.Names}}{% endraw %}'
+  register: container_status
+  changed_when: false
+
+- name: Start go-ipfs Docker container
+  ansible.builtin.shell:
+    cmd: docker-compose up -d
+    chdir: /opt/go-ipfs
+  register: docker_compose_result
+  when: container_status.stdout == ""
+
+- name: Restart go-ipfs container if config changed
+  block:
+    - name: Stop go-ipfs container
+      ansible.builtin.shell:
+        cmd: docker-compose stop go-ipfs
+        chdir: /opt/go-ipfs
+
+    - name: Remove go-ipfs container
+      ansible.builtin.shell:
+        cmd: docker-compose rm -f go-ipfs
+        chdir: /opt/go-ipfs
+
+    - name: Start go-ipfs container
+      ansible.builtin.shell:
+        cmd: docker-compose up -d go-ipfs
+        chdir: /opt/go-ipfs
+  when: docker_compose_file.changed or go_ipfs_env.changed or go_ipfs_config.changed

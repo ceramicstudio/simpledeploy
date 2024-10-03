@@ -1,0 +1,100 @@
+---
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: ceramic-prep
+      import_role:
+        name: ceramic-prep
+      tags: ceramic-prep
+    - name: zfs
+      import_role:
+        name: zfs
+      tags: zfs
+    - name: grafana-alloy
+      import_role:
+        name: grafana-alloy
+      tags: grafana-alloy
+
+- hosts:
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: docker
+      import_role:
+        name: docker
+      tags: docker
+    - name: go-ipfs
+      import_role:
+        name: go-ipfs
+      tags: go-ipfs
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+  become: true
+  roles:
+    - name: js-ceramic
+      import_role:
+        name: js-ceramic
+      tags: js-ceramic
+    - name: caddy
+      import_role:
+        name: caddy
+      tags: caddy
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: migration
+      import_role:
+        name: migration
+      tags: migration
+
+- hosts:
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: docker
+      import_role:
+        name: docker
+      tags: docker
+    - name: go-ipfs
+      import_role:
+        name: go-ipfs
+      tags: go-ipfs
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+  become: true
+  roles:
+    - name: js-ceramic
+      import_role:
+        name: js-ceramic
+      tags: js-ceramic
+    - name: caddy
+      import_role:
+        name: caddy
+      tags: caddy
+
+- hosts:
+    - gitcoin-js-ceramic-3.3boxlabs.com
+    - gitcoin-go-ipfs-1.3boxlabs.com
+  become: true
+  roles:
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck
