@@ -1,43 +1,61 @@
-## Configuring domain name and SSL cert for your composedb node
+# Configuring Domain Name and Automatic SSL Cert for Your ComposeDB Node
 
-### Remove the default load balancer
+## Prerequisites
+- A Kubernetes cluster (e.g., on DigitalOcean)
+- `kubectl` configured to interact with your cluster
+- A domain name pointed to your cluster's IP address
 
-We are going to replace the load balancer that was installed with an ingress controller and related services
+## Setup Steps
 
-`kubectl delete -f k8s/base/composedb/do-lb.yaml`
+### 1. Remove the default load balancer
+Replace the existing load balancer with an ingress controller:  
+(this step assumes a digital ocean load balancer, adjust for your configuration)
 
-### Install an ingress controller
-
-If you have not already done so, install the ingress controller to your cluster
-
-`kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/do/deploy.yaml`
-
-### Apply the ingress and related services
-
-The resources in this deployment may be deployed from the repository root like so
-
+```bash
+kubectl delete -f k8s/base/composedb/do-lb.yaml
 ```
+
+### 2. Install the NGINX Ingress Controller
+If not already installed, add the NGINX ingress controller to your cluster:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/do/deploy.yaml
+```
+
+### 3. Install cert-manager
+cert-manager will automatically manage and renew SSL certificates:
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
+```
+
+### 4. Update Configuration Files
+1. Edit `ingress.yaml`:
+   - Replace `your-domain.com` with your actual domain name.
+2. Edit `letsencrypt-issuer.yaml`:
+   - Replace `your-email@example.com` with your actual email address.
+
+### 5. Apply the Ingress and Related Services
+From the repository root, run:
+
+```bash
 kubectl apply -k k8s/cert-ingress/
 ```
 
-This will spin up the ingress and the static file server.  You may remove the static file server if it is not needed for your configuration.
+This will set up the ingress, ClusterIP service, and cert-manager configurations.
 
-### If you need to get a cert
+### 6. Verify the Setup
+1. Check that the ingress has been created:
+   ```bash
+   kubectl get ingress -n ceramic
+   ```
+2. Verify that cert-manager has issued a certificate:
+   ```bash
+   kubectl get certificates -n ceramic
+   ```
+3. Once the certificate is ready, you should be able to access your ComposeDB node securely via HTTPS at your domain.
 
-You may need to return a challenge file.  In this case you will use the static server
-that is included in this deployment, and configure its files like so
-
-```
-mkdir -p .well-known/acme-challenge
-# place the challenge file in this directory, then
-kubectl create configmap acme-challenge --from-file=.well-known/acme-challenge/ --namespace=ceramic
-```
-Follow the instructions from your cert provider to get your TLS certificate and private key.
-
-Place them in files such as `fullchain.pem` and `privkey.pem`
-
-Then run
-
-```
-kubectl create secret tls ceramic-tls-secret --cert=fullchain.pem --key=privkey.pem
-```
+## Notes
+- SSL certificates will be automatically obtained and renewed by cert-manager.
+- If you need to make changes, modify the relevant files in the `k8s/cert-ingress/` directory and reapply using `kubectl apply -k k8s/cert-ingress/`.
+- Ensure your domain's DNS is properly configured to point to your cluster's IP address.
