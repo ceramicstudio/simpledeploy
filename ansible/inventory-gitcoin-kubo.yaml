@@ -65,6 +65,7 @@ all:
     data_dog_site: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'datadog-site') }}"
     go_ipfs_image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
     domain: "{{ inventory_hostname.split('.')[-2:] | join('.') }}"
+    datadog_require: "--require /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/dd-trace/init"
     grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
     grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"
     grafana_prom_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-username') }}"
