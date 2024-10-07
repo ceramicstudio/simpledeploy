@@ -1,4 +1,4 @@
-namespace: ceramic-one-0-17-0
+namespace: ceramic-one
 
 images:
   - name: ceramicnetwork/composedb-cli

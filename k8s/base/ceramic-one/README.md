@@ -9,7 +9,7 @@ Comands assume this directory as the current working directory.
 ### Create a namespace for the nodes.
 
 ```
-export CERAMIC_NAMESPACE=ceramic-one-0-17-0
+export CERAMIC_NAMESPACE=ceramic-one
 kubectl create namespace ${CERAMIC_NAMESPACE}
 ```
 
