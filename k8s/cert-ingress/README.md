@@ -16,10 +16,10 @@ kubectl delete -f ./k8s/base/ceramic-one/manifests/js-ceramic-lb.yaml
 ```
 
 ### 2. Install the NGINX Ingress Controller
-If not already installed, add the NGINX ingress controller to your cluster.  If using Digital Ocean, use the included version that disables the proxy so that the cert-manager command will work correctly.
+If not already installed, add the NGINX ingress controller to your cluster.  This example uses the digital ocean manifests
 
  ```bash
-kubectl apply -f ingress-nginx-do-deploy.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/do/deploy.yaml
 ```
 
 ### 3. Install cert-manager
