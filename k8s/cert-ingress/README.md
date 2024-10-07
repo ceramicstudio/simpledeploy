@@ -47,11 +47,11 @@ This will set up the ingress, ClusterIP service, and cert-manager configurations
 ### 6. Verify the Setup
 1. Check that the ingress has been created:
    ```bash
-   kubectl get ingress -n ceramic
+   kubectl get ingress -n ceramic-one
    ```
 2. Verify that cert-manager has issued a certificate:
    ```bash
-   kubectl get certificates -n ceramic
+   kubectl get certificates -n ceramic-one
    ```
 3. Once the certificate is ready, you should be able to access your ComposeDB node securely via HTTPS at your domain.
 
