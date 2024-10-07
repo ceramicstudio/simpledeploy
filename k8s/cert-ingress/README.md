@@ -12,7 +12,7 @@ Replace the existing load balancer with an ingress controller:
 (this step assumes a digital ocean load balancer, adjust for your configuration)
 
 ```bash
-kubectl delete -f k8s/base/composedb/do-lb.yaml
+kubectl delete -f ./k8s/base/ceramic-one/manifests/js-ceramic-lb.yaml
 ```
 
 ### 2. Install the NGINX Ingress Controller
