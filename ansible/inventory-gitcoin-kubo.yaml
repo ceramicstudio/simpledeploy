@@ -59,6 +59,8 @@ all:
     ceramic_versions_path: /tmp
     ceramic_node_version: v20.12.2
     composedb_cli_version: latest
+    data_dog_api_key: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'datadog-api-key') }}"
+    data_dog_site: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'datadog-site') }}"
     go_ipfs_image: ceramicnetwork/go-ipfs-daemon:e177a93eae03f775a923193c9a9edcb1a7e85169
     domain: "{{ inventory_hostname.split('.')[-2:] | join('.') }}"
     grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
