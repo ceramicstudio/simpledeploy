@@ -4,4 +4,4 @@ resources:
   - cluster-ip.yaml
   - ingress.yaml
   - letsencrypt-issuer.yaml
-namespace: ceramic
+namespace: ceramic-one
