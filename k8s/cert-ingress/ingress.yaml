@@ -2,27 +2,19 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: composedb-ingress
-  namespace: ceramic
+  namespace: ceramic-one
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod" # if you're using cert-manager for SSL
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  ingressClassName: nginx
   tls:
   - hosts:
-    - "example.com"
-    # this is where the SSL certificate should be stored
+    - "your-domain.com"  # Replace with your actual domain
     secretName: ceramic-tls-secret
   rules:
-  - host: "example.com"
+  - host: "your-domain.com"  # Replace with your actual domain
     http:
       paths:
-      - path: /.well-known/acme-challenge
-        pathType: Prefix
-        backend:
-          service:
-            name: static-files-service # Your service name for static files
-            port:
-              number: 80
       - path: /
         pathType: Prefix
         backend:
@@ -30,4 +22,3 @@ spec:
             name: composedb
             port:
               number: 7007
-
