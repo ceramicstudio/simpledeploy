@@ -8,12 +8,12 @@
 ## Setup Steps
 
 ### 1. Remove the default load balancer
-Replace the existing load balancer with an ingress controller:  
-(this step assumes a digital ocean load balancer, adjust for your configuration)
 
-```bash
-kubectl delete -f ./k8s/base/ceramic-one/manifests/js-ceramic-lb.yaml
-```
+
+We are going to replace the load balancer that was installed with an ingress controller and related services
+This is assuming a starting point from the `ceramic-one` manifests applied.
+
+`kubectl delete -f k8s/base/ceramic-one/manifests/js-ceramic-lb.yaml`
 
 ### 2. Install the NGINX Ingress Controller
 If not already installed, add the NGINX ingress controller to your cluster.  This example uses the digital ocean manifests
