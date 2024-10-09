@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 Type=simple
 User=ceramic
-ExecStart=/home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/bin/node --inspect {% if datadog_enabled %}{{ datadog_require }}{% endif %} /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/@ceramicnetwork/cli/bin/ceramic.js daemon --debug --config {{ data_store_mount_path }}/daemon.config.json
+ExecStart=/home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/bin/node {% if datadog_enabled %}{{ datadog_require }}{% endif %} /home/ceramic/.nvm/versions/node/{{ ceramic_node_version }}/lib/node_modules/@ceramicnetwork/cli/bin/ceramic.js daemon --config {{ data_store_mount_path }}/daemon.config.json
 Environment=DD_APM_ENABLED={{ datadog_enabled }}
 Environment=DD_SERVICE=js-ceramic
 Environment=DD_PROFILING_ENABLED={{ datadog_enabled }}
