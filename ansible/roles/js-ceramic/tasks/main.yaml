@@ -43,15 +43,21 @@
       register: installed_ceramic_version
       changed_when: false
 
+    - name: List versions
+      ansible.builtin.debug:
+        msg:
+          - "Installed version: {{ installed_ceramic_version.stdout | trim }}"
+          - "Configured version: {{ js_ceramic_version }}"
+
     - name: Install ceramic
       ansible.builtin.shell: |
         source ~/.nvm/nvm.sh && npm install -g @composedb/cli@{{composedb_cli_version}} @ceramicnetwork/cli@{{js_ceramic_version}}
       args:
         executable: /bin/bash
         chdir: "$HOME"
-        creates: "$HOME/.nvm/versions/node/{{ceramic_node_version}}/lib/node_modules/@ceramicnetwork/cli/package.json"
-      when: installed_ceramic_version.stdout != js_ceramic_version
-      register: install_ceramic_version
+      when: installed_ceramic_version.stdout | trim is version(js_ceramic_version, '!=')
+      register: install_ceramic_result
+      changed_when: install_ceramic_result.rc == 0 and install_ceramic_result.stdout is search('added|updated|changed')
 
     - name: Template ceramic daemon.config
       ansible.builtin.template:
