@@ -1,0 +1,85 @@
+---
+# Script to update the ceramic-one blockstore and run migration on the updated blocks
+
+
+# Get latest common snapshot between the kubo and c1 datastores
+- name: Get latest common snapshot between gitcoin-go-ipfs-1 and gitcoin-rust-ceramic-1
+  block:
+    - name: List snapshots from gitcoin-go-ipfs-1
+      ansible.builtin.shell:
+        cmd: zfs list -H -t snapshot -o name ipfspool/data-store
+      register: kubo_snapshots
+      delegate_to: gitcoin-go-ipfs-1
+
+    - name: Let snapshots from gitcoin-rust-ceramic-1
+      ansible.builtin.shell:
+        cmd: zfs list -H -t snapshot -o name migrationpool/data-store
+      register: c1_snapshots
+      delegate_to: gitcoin-rust-ceramic-1
+
+    - name: Find latest common snapshot
+      ansible.builtin.shell:
+        cmd: |
+          kubo_snaps="{{ kubo_snapshots.stdout_lines | join('\n') }}"
+          c1_snaps="{{ c1_snapshots.stdout_lines | join('\n') }}"
+          echo "$kubo_snaps" | grep -F "$(echo "$c1_snaps" | sed 's/migrationpool\/data-store@//')" | tail -n 1
+      register: common_snapshot
+      failed_when: common_snapshot.rc != 0 or common_snapshot.stdout == ""
+      delegate_to: localhost
+
+    - name: Display latest common snapshot
+      ansible.builtin.debug:
+        var: common_snapshot.stdout
+
+  run_once: true
+
+# Create new kubo snapshot
+- name: Create a new snapshot on gitcoin-go-ipfs-1
+  ansible.buildin.shell:
+    cmd: |
+      snapshot_name="ipfspool/data-store@c1_migration_$(date +%Y%m%d_%H%M%S)"
+      zfs snapshot "$snapshot_name"
+      echo "$snapshot_name"
+  delegate_to: gitcoin-go-ipfs-1
+  become: yes
+  register: new_snapshot
+
+# Compare to the new snapshot to latest common snapshot and get file list
+- name: Run zfs diff and stream results
+  block:
+    - name: Execute zfs diff
+      ansible.builtin.shell:
+        cmd: |
+          output_file="/tmp/zfs_diff_output_$(date +%Y%m%d_%H%M%S).txt"
+          zfs diff -F "{{ common_snapshot.stdout }} {{ new_snapshot }} | tee "$output_file"
+      args:
+        executable: /bin/bash
+      register: diff_result
+      delegate_to: gitcoin-go-ipfs-1
+      become: yes
+
+    - name: Display diff results in real time
+      ansible.builtin.debug:
+        var: diff_result.stdout_lines
+      when: diff_result.stdout_lines | length > 0
+
+    strategy: free
+
+- name: Fetch the diff results file
+  ansible.builtin.fetch:
+    src: "/tmp/zfs_diff_output.txt"
+    dest: "zfs_diff_{{ inventory_hostname }}.txt"
+    flat: yes
+  delegate_to: gitcoin-go-ipfs-1
+
+- name: Register diff results
+  ansible.builtin.set_fact:
+    zfs_diff_results: "{{ diff_result.stdout_lines }}"
+
+# TODO
+
+# zfs send new snapshot to the c1 node
+
+# run the migration script on the c1 node only on the changed blocks
+
+
