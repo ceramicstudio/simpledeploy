@@ -71,7 +71,6 @@
         var: diff_result.stdout_lines
       when: diff_result.stdout_lines | length > 0
   
-  strategy: free
 
 # run the migration script on the c1 node only on the changed blocks
 
