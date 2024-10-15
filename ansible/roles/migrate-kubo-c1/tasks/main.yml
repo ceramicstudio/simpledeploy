@@ -33,53 +33,99 @@
 
   run_once: true
 
-# Create new kubo snapshot
-- name: Create a new snapshot on gitcoin-go-ipfs-1
-  ansible.buildin.shell:
-    cmd: |
-      snapshot_name="ipfspool/data-store@c1_migration_$(date +%Y%m%d_%H%M%S)"
-      zfs snapshot "$snapshot_name"
-      echo "$snapshot_name"
-  delegate_to: gitcoin-go-ipfs-1
-  become: yes
+- name: Create new snapshot on ipfs node
+  ansible.builtin.shell:
+    cmd: zfs snapshot ipfspool/data-store@$(date +%Y%m%d_%H%M%S)
   register: new_snapshot
+  delegate_to: gitcoin-go-ipfs-1
 
-# Compare to the new snapshot to latest common snapshot and get file list
-- name: Run zfs diff and stream results
+- name: Send incremental snapshot to c1 node
+  ansible.builtin.shell:
+    cmd: |
+      zfs send -i {{ common_snapshot.stdout }} {{ new_snapshot.stdout }} | \
+      ssh gitcoin-rust-ceramic-1 'zfs receive migrationpool/data-store'
+  delegate_to: gitcoin-go-ipfs-1
+
+- name: Set output file name for diff results
+  ansible.builtin.set_fact:
+    diff_output_file: "/tmp/zfs_diff_output_$(date +%Y%m%d_%H%M%S).txt"
+    modified_block_file: "/tmp/zfs_modified_blockfiles_$(date +%Y%m%d_%H%M%S).txt"
+    files_to_process: "/tmp/zfs_modified_files_to_process_$(date +%Y%m%d_%H%M%S).txt"
+    already_processed: "/tmp/zfs_already_processed.txt"
+
+
+- name: Run zfs diff on the c1 node
   block:
     - name: Execute zfs diff
       ansible.builtin.shell:
         cmd: |
-          output_file="/tmp/zfs_diff_output_$(date +%Y%m%d_%H%M%S).txt"
-          zfs diff -F "{{ common_snapshot.stdout }} {{ new_snapshot }} | tee "$output_file"
+          zfs diff -F {{ common_snapshot.stdout | regex_replace('ipfspool', 'migrationpool') }} {{ new_snapshot.stdout | regex_replace('ipfspool', 'migrationpool') }} | tee "{{ diff_output_file }}"
       args:
         executable: /bin/bash
       register: diff_result
-      delegate_to: gitcoin-go-ipfs-1
+      delegate_to: gitcoin-rust-ceramic-1
       become: yes
-
+    
     - name: Display diff results in real time
       ansible.builtin.debug:
         var: diff_result.stdout_lines
       when: diff_result.stdout_lines | length > 0
-
-    strategy: free
-
-- name: Fetch the diff results file
-  ansible.builtin.fetch:
-    src: "/tmp/zfs_diff_output.txt"
-    dest: "zfs_diff_{{ inventory_hostname }}.txt"
-    flat: yes
-  delegate_to: gitcoin-go-ipfs-1
-
-- name: Register diff results
-  ansible.builtin.set_fact:
-    zfs_diff_results: "{{ diff_result.stdout_lines }}"
-
-# TODO
-
-# zfs send new snapshot to the c1 node
+  
+  strategy: free
 
 # run the migration script on the c1 node only on the changed blocks
 
+- name: Generate list of modified block files
+  ansible.builtin.shell:
+    cmd: |
+      awk '/^M\t\/\t/ {print $3}' "{{ diff_output_file }}" | grep '/go_ipfs_datastore/ipfs-data/blocks/' > "{{ modified_block_file }}"
+  args:
+    executable: /bin/bash
+  delegate_to: gitcoin-rust-ceramic-1
+  become: yes
 
+- name: Exclude files already processed
+  ansible.builtin.shell:
+    cmd: |
+      comm -23 <(sort -u "{{ modified_block_file }}") <(sort -u "{{ already_processed }}") > "{{ files_to_process }}"
+  args:
+    executable: /bin/bash
+  delegate_to: gitcoin-rust-ceramic-1
+  become: yes
+
+
+- name: Run migration and update processed files list
+  block:
+
+    # TODO correct how we run this script TODO #
+    - name: Run migration on modified files not already processed
+      ansible.builtin.command:
+        cmd: >
+          ceramic-one migrations from-ipfs 
+          --input-ipfs-path {{ input_ipfs_path }}
+          --output-store-path {{ output_store_path }}
+          --input-file-list-path {{ files_to_process }}
+          --network {{ network }}
+          {% if local_network_id is defined %}--local-network-id {{ local_network_id }}{% endif %}
+          {% if non_sharded_paths %}--non-sharded-paths{% endif %}
+          {% if log_tile_docs %}--log-tile-docs{% endif %}
+      environment:
+        CERAMIC_ONE_INPUT_FILE_LIST_PATH: "{{ files_to_process }}"
+      delegate_to: gitcoin-rust-ceramic-1
+      become: yes
+
+    - name: Append processed files to already_processed list
+      ansible.builtin.shell:
+        cmd: cat {{ files_to_process }} >> {{ already_processed }}
+      delegate_to: gitcoin-rust-ceramic-1
+      become: yes
+
+  always:
+    - name: Display migration completion message
+      ansible.builtin.debug:
+        msg: "Migration process completed. Check logs for details."
+
+  rescue:
+    - name: Display migration failure message
+      ansible.builtin.debug:
+        msg: "Migration process failed. Check logs for errors."
