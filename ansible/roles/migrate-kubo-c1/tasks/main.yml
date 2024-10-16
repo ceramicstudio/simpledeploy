@@ -1,6 +1,20 @@
 ---
 # Script to update the ceramic-one blockstore and run migration on the updated blocks
 
+# Basic plan:
+
+# Get latest common snapshot
+
+# create new snapshot and send incremental update since latest common snapshot from kubo -> c1
+
+# get file list of changed files and dates between dates of latest common snapshot & new snapshot
+
+# diff with processed list of files and dates
+
+# run migration on the todos (not yet processed) and add to processed list as each completes
+
+##################################################################################################
+######   Send Incremental Snapshot ###############################################################
 
 # Get latest common snapshot between the kubo and c1 datastores
 - name: Get latest common snapshot between gitcoin-go-ipfs-1 and gitcoin-rust-ceramic-1
@@ -46,52 +60,49 @@
       ssh gitcoin-rust-ceramic-1 'zfs receive migrationpool/data-store'
   delegate_to: gitcoin-go-ipfs-1
 
-- name: Set output file name for diff results
-  ansible.builtin.set_fact:
-    diff_output_file: "/tmp/zfs_diff_output_$(date +%Y%m%d_%H%M%S).txt"
-    modified_block_file: "/tmp/zfs_modified_blockfiles_$(date +%Y%m%d_%H%M%S).txt"
-    files_to_process: "/tmp/zfs_modified_files_to_process_$(date +%Y%m%d_%H%M%S).txt"
-    already_processed: "/tmp/zfs_already_processed.txt"
-
-
-- name: Run zfs diff on the c1 node
+- name: Get time window between snapshots
   block:
-    - name: Execute zfs diff
-      ansible.builtin.shell:
-        cmd: |
-          zfs diff -F {{ common_snapshot.stdout | regex_replace('ipfspool', 'migrationpool') }} {{ new_snapshot.stdout | regex_replace('ipfspool', 'migrationpool') }} | tee "{{ diff_output_file }}"
-      args:
-        executable: /bin/bash
-      register: diff_result
-      delegate_to: gitcoin-rust-ceramic-1
-      become: yes
-    
-    - name: Display diff results in real time
-      ansible.builtin.debug:
-        var: diff_result.stdout_lines
-      when: diff_result.stdout_lines | length > 0
-  
+    - name: Get ZFS snapshot creation dates
+      ansible.builtin.shell: |
+        snapshot1_date=$(zfs get -H -o value creation {{ common_snapshot.stdout }} | xargs -I{} date -d {} '+%Y%m%d_%H%M%S')
+        snapshot2_date=$(zfs get -H -o value creation {{ new_snapshot.stdout }} | xargs -I{} date -d {} '+%Y%m%d_%H%M%S')
+        echo "$snapshot1_date"
+        echo "$snapshot2_date"
+      register: snapshot_dates_result
 
-# run the migration script on the c1 node only on the changed blocks
+    - name: Set facts for snapshot dates and filenames
+      ansible.builtin.set_fact:
 
-- name: Generate list of modified block files
+        # filename for modified blocks within the date window
+        modified_blocks: "/home/migrator/modified_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+
+        # log of all processed blocks for this window
+        # (even if we processed a file in a previous window, it must be reprocessed in this window)
+        processed_blocks: "/home/migrator/processed_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+        migration_outfile: "/home/migrator/migrations_output_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+
+        # formats for use in fdfind command
+        from_date: "{{ from_date_raw | strftime('%Y-%m-%d %H:%M:%S', '%Y%m%d_%H%M%S') }}"
+        to_date: "{{ to_date_raw | strftime('%Y-%m-%d %H:%M:%S', '%Y%m%d_%H%M%S') }}"
+      vars:
+        # we have output the data in a format suitable for filename segments
+        from_date_fn: "{{ snapshot_dates_result.stdout_lines[0] }}"
+        to_date_fn: "{{ snapshot_dates_result.stdout_lines[1] }}"
+  delegate_to: gitcoin-rust-ceramic-1
+
+
+##################################################################################################
+######   Generate List of Modified Blocks To Migrate    #########################################
+
+- name: Run fdfind on the c1 node after the snapshot is sent to find files modified between snapshots
   ansible.builtin.shell:
     cmd: |
-      awk '/^M\t\/\t/ {print $3}' "{{ diff_output_file }}" | grep '/go_ipfs_datastore/ipfs-data/blocks/' > "{{ modified_block_file }}"
-  args:
-    executable: /bin/bash
+      fdfind . '/migration_datastore/ipfs-data/blocks' --changed-after '{{ from_date }}' --changed-before '{{ to_date }}' > {{ modified_blocks }}
   delegate_to: gitcoin-rust-ceramic-1
-  become: yes
 
-- name: Exclude files already processed
-  ansible.builtin.shell:
-    cmd: |
-      comm -23 <(sort -u "{{ modified_block_file }}") <(sort -u "{{ already_processed }}") > "{{ files_to_process }}"
-  args:
-    executable: /bin/bash
-  delegate_to: gitcoin-rust-ceramic-1
-  become: yes
 
+##################################################################################################
+######   Run the migration script on the C1 node on the changed blocks  ##########################
 
 - name: Run migration and update processed files list
   block:
@@ -100,22 +111,15 @@
     - name: Run migration on modified files not already processed
       ansible.builtin.command:
         cmd: >
-          ceramic-one migrations from-ipfs 
-          --input-ipfs-path {{ input_ipfs_path }}
-          --output-store-path {{ output_store_path }}
-          --input-file-list-path {{ files_to_process }}
-          --network {{ network }}
-          {% if local_network_id is defined %}--local-network-id {{ local_network_id }}{% endif %}
-          {% if non_sharded_paths %}--non-sharded-paths{% endif %}
-          {% if log_tile_docs %}--log-tile-docs{% endif %}
+          ceramic-one migrations from-ipfs \
+          --input-ipfs-path /migration_datastore/ipfs-data \
+          --output-store-path /ceramic_one_datastore \
+          --network mainnet \
+          --input-file-list-path {{ modified_blocks }} \
+          --log-tile-docs \
+          --log-format single-line > {{ migration_outfile }}
       environment:
-        CERAMIC_ONE_INPUT_FILE_LIST_PATH: "{{ files_to_process }}"
-      delegate_to: gitcoin-rust-ceramic-1
-      become: yes
-
-    - name: Append processed files to already_processed list
-      ansible.builtin.shell:
-        cmd: cat {{ files_to_process }} >> {{ already_processed }}
+        CERAMIC_ONE_INPUT_FILE_LIST_PATH: "{{ modified_blocks }}"
       delegate_to: gitcoin-rust-ceramic-1
       become: yes
 
