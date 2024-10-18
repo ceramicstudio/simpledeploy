@@ -74,12 +74,12 @@
       ansible.builtin.set_fact:
 
         # filename for modified blocks within the date window
-        modified_blocks: "/home/migrator/modified_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+        modified_blocks: "/ceramic_one_datastore/migration/modified_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
 
         # log of all processed blocks for this window
         # (even if we processed a file in a previous window, it must be reprocessed in this window)
-        processed_blocks: "/home/migrator/processed_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
-        migration_outfile: "/home/migrator/migrations_output_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+        processed_blocks: "/ceramic_one_datastore/migration/processed_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+        migration_outfile: "/ceramic_one_datastore/migration/migrations_output_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
 
         # formats for use in fdfind command
         from_date: "{{ from_date_raw | strftime('%Y-%m-%d %H:%M:%S', '%Y%m%d_%H%M%S') }}"
@@ -89,6 +89,7 @@
         from_date_fn: "{{ snapshot_dates_result.stdout_lines[0] }}"
         to_date_fn: "{{ snapshot_dates_result.stdout_lines[1] }}"
   delegate_to: gitcoin-rust-ceramic-1
+  become: yes
 
 
 ##################################################################################################
@@ -99,7 +100,7 @@
     cmd: |
       fdfind . '/migration_datastore/ipfs-data/blocks' --extension data --changed-after '{{ from_date }}' --changed-before '{{ to_date }}' > {{ modified_blocks }}
   delegate_to: gitcoin-rust-ceramic-1
-
+  become: yes
 
 ##################################################################################################
 ######   Run the migration script on the C1 node on the changed blocks  ##########################
