@@ -1,0 +1,34 @@
+namespace: ceramic-one-mainnet
+
+resources:
+  - ./manifests/js-ceramic-sts.yaml
+  - ./manifests/ceramic-one-sts.yaml
+  - ./manifests/ceramic-one-lb.yaml
+  - ./manifests/js-ceramic-lb.yaml
+  - ./manifests/postgres-sts.yaml
+
+images:
+  - name: ceramicnetwork/composedb-cli
+    newName: ceramicnetwork/composedb-cli
+    newTag: "latest"
+  - name: ceramicnetwork/js-ceramic
+    newName: ceramicnetwork/js-ceramic
+    newTag: "latest"
+  - name: ceramicnetwork/ceramic-one
+    newName: public.ecr.aws/r5b3e0r5/3box/ceramic-one
+    newTag: "0.40.0"
+  - name: postgres
+    newName: postgres
+    newTag: 15-alpine
+
+configMapGenerator:
+  - name: js-ceramic-env
+    envs:
+      - ./envs/js-ceramic.env
+  - name: ceramic-one-env
+    envs:
+      - ./envs/ceramic-one.env
+  - name: js-ceramic-init
+    files:
+      - ./files/daemon-config.json
+      - ./files/js-ceramic-init.sh
