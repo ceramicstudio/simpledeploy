@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  serviceName: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: db
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: ceramic-postgres-auth
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: ceramic-postgres-auth
+          image: postgres
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              name: postgres
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              ephemeral-storage: 1Gi
+              memory: 1Gi
+          securityContext:
+            runAsGroup: 70
+            runAsUser: 70
+          volumeMounts:
+            - mountPath: /var/lib/postgresql
+              name: postgres-data
+              subPath: ceramic_data
+      securityContext:
+        fsGroup: 70
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: postgres-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: postgres
+  selector:
+    app: postgres
