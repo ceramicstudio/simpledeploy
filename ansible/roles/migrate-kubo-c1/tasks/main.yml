@@ -97,7 +97,7 @@
 - name: Run fdfind on the c1 node after the snapshot is sent to find files modified between snapshots
   ansible.builtin.shell:
     cmd: |
-      fdfind . '/migration_datastore/ipfs-data/blocks' --changed-after '{{ from_date }}' --changed-before '{{ to_date }}' > {{ modified_blocks }}
+      fdfind . '/migration_datastore/ipfs-data/blocks' --extension data --changed-after '{{ from_date }}' --changed-before '{{ to_date }}' > {{ modified_blocks }}
   delegate_to: gitcoin-rust-ceramic-1
 
 
