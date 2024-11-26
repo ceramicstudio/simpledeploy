@@ -1,0 +1,20 @@
+all:
+  children:
+    go-proxy:
+      hosts:
+        gitcoin-js-ceramic-4.3boxlabs.com:
+          ceramic_target_host_internal: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-ceramic-host-internal') }}"
+          #    ceramic_mirror_host_internal: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-ceramic-mirror-host-internal') }}"
+          data_store_mount_path: /js_ceramic_datastore
+          grafana_loki_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-username') }}"
+          grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"
+          grafana_prom_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-username') }}"
+          grafana_prom_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-password') }}"
+          go_proxy_version: latest
+          go_version: 1.23.3
+          healthcheck_port: 7007
+          healthcheck_path: /api/v0/node/healthcheck
+          metrics_port: 9464
+          metrics_path: /metrics
+          tags:
+            - go-proxy

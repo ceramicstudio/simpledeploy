@@ -31,10 +31,19 @@ prometheus.scrape "default" {
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
 
-{% if 'js-ceramic' in inventory_hostname %}
+{% if ('go-proxy' is not in group_names) and ('js-ceramic' in inventory_hostname) %}
 prometheus.scrape "js_ceramic" {
   targets = [
     {"job" = "js-ceramic", "__address__" = "127.0.0.1:9464"},
+  ]
+  forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
+}
+{% endif %}
+
+{% if 'go-proxy' in group_names %}
+prometheus.scrape "go_proxy" {
+  targets = [
+    {"job" = "go-proxy", "__address__" = "127.0.0.1:9464"},
   ]
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
