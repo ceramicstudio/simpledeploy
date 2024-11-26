@@ -10,7 +10,7 @@ all:
           grafana_loki_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-loki-password') }}"
           grafana_prom_username: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-username') }}"
           grafana_prom_password: "{{ lookup('gcp_secret', 'tnet-prod-2024', 'grafana-prom-password') }}"
-          go_proxy_version: latest
+          go_proxy_version: 0.1.6
           go_version: 1.23.3
           healthcheck_port: 7007
           healthcheck_path: /api/v0/node/healthcheck
