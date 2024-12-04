@@ -13,6 +13,9 @@ all:
         js_ceramic_version: 6.11.0-rc.0
         metrics_path: /metrics
         metrics_port: 9464
+        datadog_enabled: false
+        inspect_enabled: false
+        debug_enabled: false
         zfs_pools:
           - name: ceramiconepool
             devices:
@@ -46,6 +49,7 @@ all:
     api_port: 5101
     swarm_port: 4101
     ceramic_network: mainnet
+    ceramic_indexing_db_port: 5432
     ceramic_indexing_db_host: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-mirror-db-host') }}"
     ceramic_indexing_db_name: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-mirror-db-name') }}"
     ceramic_indexing_db_user: "{{ lookup('gcp_secret', 'ceramic-3box-apps', 'gitcoin-mirror-db-user') }}"
