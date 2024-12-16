@@ -39,7 +39,7 @@ all:
         healthcheck_port: "{{ api_port }}"
         metrics_path: /metrics
         metrics_port: 9464
-        rust_ceramic_version: v0.43.0
+        rust_ceramic_version: v0.46.0
         rust_ceramic_download_url: "https://github.com/ceramicnetwork/rust-ceramic/releases/download/{{ rust_ceramic_version }}/ceramic-one_x86_64-unknown-linux-gnu.tar.gz"
 
   vars:
