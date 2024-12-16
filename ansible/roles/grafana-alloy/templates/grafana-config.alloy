@@ -31,10 +31,19 @@ prometheus.scrape "default" {
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
 
-{% if 'js-ceramic' in inventory_hostname %}
+{% if ('go-proxy' is not in group_names) and ('js-ceramic' in inventory_hostname) %}
 prometheus.scrape "js_ceramic" {
   targets = [
-    {"job" = "js-ceramic", "__address__" = "127.0.0.1:9464"},
+    {"job" = "js-ceramic", "__address__" = "127.0.0.1:{{ metrics_port }}"},
+  ]
+  forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
+}
+{% endif %}
+
+{% if 'go-proxy' in group_names %}
+prometheus.scrape "go_proxy" {
+  targets = [
+    {"job" = "go-proxy", "__address__" = "127.0.0.1:{{ metrics_port }}"},
   ]
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
@@ -43,7 +52,7 @@ prometheus.scrape "js_ceramic" {
 {% if 'rust-ceramic' in inventory_hostname %}
 prometheus.scrape "rust_ceramic" {
   targets = [
-      {"job" = "rust-ceramic", "__address__" = "127.0.0.1:9465"},
+      {"job" = "rust-ceramic", "__address__" = "127.0.0.1:{{ metrics_port }}"},
   ]
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
@@ -53,7 +62,7 @@ prometheus.scrape "rust_ceramic" {
 prometheus.scrape "go_ipfs" {
   metrics_path = "/debug/metrics/prometheus"
   targets = [
-      {"job" = "go-ipfs", "__address__" = "127.0.0.1:5101"},
+      {"job" = "go-ipfs", "__address__" = "127.0.0.1:{{ api_port }}"},
   ]
   forward_to = [prometheus.relabel.replace_instance_with_hostname.receiver]
 }
