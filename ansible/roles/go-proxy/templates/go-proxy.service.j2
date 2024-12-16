@@ -5,7 +5,7 @@ After=network-online.target
 [Service]
 Type=simple
 User=ceramic
-LimitNOFILE=65536
+LimitNOFILE=65535
 ExecStart=/usr/local/bin/go-proxy
 EnvironmentFile={{ data_store_mount_path }}/go-proxy.env
 
