@@ -1,0 +1,17 @@
+---
+- hosts:
+    - gitcoin-js-ceramic-4.3boxlabs.com
+  become: true
+  roles:
+    - name: grafana-alloy
+      import_role:
+        name: grafana-alloy
+      tags: grafana-alloy
+    - name: go-proxy
+      import_role:
+        name: go-proxy
+      tags: go-proxy
+    - name: healthcheck
+      import_role:
+        name: healthcheck
+      tags: healthcheck
