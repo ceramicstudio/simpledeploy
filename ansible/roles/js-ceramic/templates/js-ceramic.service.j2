@@ -14,6 +14,8 @@ Environment=DD_ENV=gitcoin
 Environment=NODE_OPTIONS=--max-old-space-size=16384
 Environment=NODE_ENV=production
 Environment=CERAMIC_STREAM_CACHE_LIMIT=1000
+Environment=CERAMIC_DISABLE_ANCHORING={{ 'true' if anchoring_disabled | bool else 'false' }}
+Environment=CERAMIC_SKIP_IPFS_PERSISTENCE_STARTUP_CHECK={{ 'true' if skip_ipfs_persistence_startup_check | bool else 'false' }}
 
 Restart=always
 RestartSec=1
