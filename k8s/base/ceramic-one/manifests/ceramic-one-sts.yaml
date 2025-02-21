@@ -52,10 +52,15 @@ spec:
           volumeMounts:
             - mountPath: /data/ceramic-one
               name: ceramic-one-data
+            - mountPath: /data/temp-extract
+              name: temp-storage
       volumes:
         - name: ceramic-one-data
           persistentVolumeClaim:
             claimName: ceramic-one-pvc
+        - name: temp-storage
+          persistentVolumeClaim:
+            claimName: temp-extract-pvc
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -67,6 +72,16 @@ spec:
         resources:
           requests:
             storage: 10Gi
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: temp-extract-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
 ---
 apiVersion: v1
 kind: Service
