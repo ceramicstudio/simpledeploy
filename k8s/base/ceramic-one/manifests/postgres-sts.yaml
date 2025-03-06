@@ -36,6 +36,8 @@ spec:
                 secretKeyRef:
                   key: username
                   name: ceramic-postgres-auth
+            - name: PGDATA
+              value: "/var/lib/postgresql/ceramic_data"
           image: postgres
           imagePullPolicy: IfNotPresent
           ports:
