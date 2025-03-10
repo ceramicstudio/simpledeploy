@@ -17,12 +17,15 @@
         "log-to-files": false
     },
     "metrics": {
-        "metrics-exporter-enabled": false
+        "metrics-exporter-enabled": false,
+        "metrics-publisher-enabled": true
     },
     "network": {
         "name": "${CERAMIC_NETWORK}"
     },
-    "node": {},
+    "node": {
+        "privateSeedUrl": "inplace:ed25519#fe7728465b2dec4878912851013e17ca7ea903bdb630ea08518fc8b801167e57"
+    },
     "state-store": {
         "mode": "fs",
         "local-directory": "${CERAMIC_STATE_STORE_PATH}"
