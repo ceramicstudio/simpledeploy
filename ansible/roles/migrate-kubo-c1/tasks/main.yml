@@ -1,0 +1,135 @@
+---
+# Script to update the ceramic-one blockstore and run migration on the updated blocks
+
+# Basic plan:
+
+# Get latest common snapshot
+
+# create new snapshot and send incremental update since latest common snapshot from kubo -> c1
+
+# get file list of changed files and dates between dates of latest common snapshot & new snapshot
+
+# diff with processed list of files and dates
+
+# run migration on the todos (not yet processed) and add to processed list as each completes
+
+##################################################################################################
+######   Send Incremental Snapshot ###############################################################
+
+# Get latest common snapshot between the kubo and c1 datastores
+- name: Get latest common snapshot between gitcoin-go-ipfs-1 and gitcoin-rust-ceramic-1
+  block:
+    - name: List snapshots from gitcoin-go-ipfs-1
+      ansible.builtin.shell:
+        cmd: zfs list -H -t snapshot -o name ipfspool/data-store
+      register: kubo_snapshots
+      delegate_to: gitcoin-go-ipfs-1
+
+    - name: Let snapshots from gitcoin-rust-ceramic-1
+      ansible.builtin.shell:
+        cmd: zfs list -H -t snapshot -o name migrationpool/data-store
+      register: c1_snapshots
+      delegate_to: gitcoin-rust-ceramic-1
+
+    - name: Find latest common snapshot
+      ansible.builtin.shell:
+        cmd: |
+          kubo_snaps="{{ kubo_snapshots.stdout_lines | join('\n') }}"
+          c1_snaps="{{ c1_snapshots.stdout_lines | join('\n') }}"
+          echo "$kubo_snaps" | grep -F "$(echo "$c1_snaps" | sed 's/migrationpool\/data-store@//')" | tail -n 1
+      register: common_snapshot
+      failed_when: common_snapshot.rc != 0 or common_snapshot.stdout == ""
+      delegate_to: localhost
+
+    - name: Display latest common snapshot
+      ansible.builtin.debug:
+        var: common_snapshot.stdout
+
+  run_once: true
+
+- name: Create new snapshot on ipfs node
+  ansible.builtin.shell:
+    cmd: zfs snapshot ipfspool/data-store@$(date +%Y%m%d_%H%M%S)
+  register: new_snapshot
+  delegate_to: gitcoin-go-ipfs-1
+
+- name: Send incremental snapshot to c1 node
+  ansible.builtin.shell:
+    cmd: |
+      zfs send -i {{ common_snapshot.stdout }} {{ new_snapshot.stdout }} | \
+      ssh gitcoin-rust-ceramic-1 'zfs receive migrationpool/data-store'
+  delegate_to: gitcoin-go-ipfs-1
+
+- name: Get time window between snapshots
+  block:
+    - name: Get ZFS snapshot creation dates
+      ansible.builtin.shell: |
+        snapshot1_date=$(zfs get -H -o value creation {{ common_snapshot.stdout }} | xargs -I{} date -d {} '+%Y%m%d_%H%M%S')
+        snapshot2_date=$(zfs get -H -o value creation {{ new_snapshot.stdout }} | xargs -I{} date -d {} '+%Y%m%d_%H%M%S')
+        echo "$snapshot1_date"
+        echo "$snapshot2_date"
+      register: snapshot_dates_result
+
+    - name: Set facts for snapshot dates and filenames
+      ansible.builtin.set_fact:
+
+        # filename for modified blocks within the date window
+        modified_blocks: "/ceramic_one_datastore/migration/modified_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+
+        # log of all processed blocks for this window
+        # (even if we processed a file in a previous window, it must be reprocessed in this window)
+        processed_blocks: "/ceramic_one_datastore/migration/processed_blocks_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+        migration_outfile: "/ceramic_one_datastore/migration/migrations_output_{{ from_date_fn }}_to_{{ to_date_fn }}.txt"
+
+        # formats for use in fdfind command
+        from_date: "{{ from_date_raw | strftime('%Y-%m-%d %H:%M:%S', '%Y%m%d_%H%M%S') }}"
+        to_date: "{{ to_date_raw | strftime('%Y-%m-%d %H:%M:%S', '%Y%m%d_%H%M%S') }}"
+      vars:
+        # we have output the data in a format suitable for filename segments
+        from_date_fn: "{{ snapshot_dates_result.stdout_lines[0] }}"
+        to_date_fn: "{{ snapshot_dates_result.stdout_lines[1] }}"
+  delegate_to: gitcoin-rust-ceramic-1
+  become: yes
+
+
+##################################################################################################
+######   Generate List of Modified Blocks To Migrate    #########################################
+
+- name: Run fdfind on the c1 node after the snapshot is sent to find files modified between snapshots
+  ansible.builtin.shell:
+    cmd: |
+      fdfind . '/migration_datastore/ipfs-data/blocks' --extension data --changed-after '{{ from_date }}' --changed-before '{{ to_date }}' > {{ modified_blocks }}
+  delegate_to: gitcoin-rust-ceramic-1
+  become: yes
+
+##################################################################################################
+######   Run the migration script on the C1 node on the changed blocks  ##########################
+
+- name: Run migration and update processed files list
+  block:
+
+    # TODO correct how we run this script TODO #
+    - name: Run migration on modified files not already processed
+      ansible.builtin.command:
+        cmd: >
+          ceramic-one migrations from-ipfs \
+          --input-ipfs-path /migration_datastore/ipfs-data \
+          --output-store-path /ceramic_one_datastore \
+          --network mainnet \
+          --input-file-list-path {{ modified_blocks }} \
+          --log-tile-docs \
+          --log-format single-line > {{ migration_outfile }}
+      environment:
+        CERAMIC_ONE_INPUT_FILE_LIST_PATH: "{{ modified_blocks }}"
+      delegate_to: gitcoin-rust-ceramic-1
+      become: yes
+
+  always:
+    - name: Display migration completion message
+      ansible.builtin.debug:
+        msg: "Migration process completed. Check logs for details."
+
+  rescue:
+    - name: Display migration failure message
+      ansible.builtin.debug:
+        msg: "Migration process failed. Check logs for errors."
